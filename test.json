@@ -1,0 +1,23 @@
+//http://127.0.0.1:8000/api/v1/podcasts 
+
+{
+    "title" : "Tech Talks",
+    "slug" : "tech-talks",
+    "description": "A podcast about tech-talks",
+    "Language": "en",
+    "author" : "John Doe",
+    "website_url" : "https://techtalks.example.com",
+    "cover_image" : "https://cdn.example.com/podcasts/techtalks.jpg"
+}
+// http://127.0.0.1:8000/api/v1/seasons 
+
+
+// {
+//   "podcast_id": 1,
+//   "title": "Season 1",
+//   "slug": "season-1",
+//   "description": "The first season covering AI basics.",
+//   "cover_image": "https://cdn.example.com/seasons/season1.jpg",
+//   "published_at": "2025-10-08 12:00:00"
+// }
+
