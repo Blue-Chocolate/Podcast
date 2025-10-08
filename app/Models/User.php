@@ -19,4 +19,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Playlist::class, 'created_by');
     }
+public function blogs()
+{
+    return $this->hasMany(Blog::class);
+}
+
+public function posts()
+{
+    return $this->hasMany(Post::class);
+}
+
 }

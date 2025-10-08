@@ -70,3 +70,22 @@ Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name(
 
 Route::get('/rss/podcasts/{slug}', [PodcastRssController::class, 'show']);
 Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
+
+use App\Http\Controllers\Api\BlogController\BlogController;
+use App\Http\Controllers\Api\PostController\PostController;
+
+Route::prefix('blogs')->group(function () {
+    Route::get('/', [BlogController::class, 'index']);
+    Route::get('/{id}', [BlogController::class, 'show']);
+    Route::post('/', [BlogController::class, 'store']);
+    Route::put('/{id}', [BlogController::class, 'update']);
+    Route::delete('/{id}', [BlogController::class, 'destroy']);
+});
+
+Route::prefix('posts')->group(function () {
+    Route::get('/', [PostController::class, 'index']);
+    Route::get('/{id}', [PostController::class, 'show']);
+    Route::post('/', [PostController::class, 'store']);
+    Route::put('/{id}', [PostController::class, 'update']);
+    Route::delete('/{id}', [PostController::class, 'destroy']);
+});
