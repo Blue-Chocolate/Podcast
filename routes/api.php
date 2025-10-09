@@ -89,3 +89,9 @@ Route::prefix('posts')->group(function () {
     Route::put('/{id}', [PostController::class, 'update']);
     Route::delete('/{id}', [PostController::class, 'destroy']);
 });
+use App\Http\Controllers\Admin\PlaylistController;
+
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    Route::apiResource('playlists', PlaylistController::class);
+    Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
+});

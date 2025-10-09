@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\PodcastController;
+namespace App\Http\Controllers\Api\PodcastRssController;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
