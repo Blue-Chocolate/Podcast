@@ -3,17 +3,16 @@
 namespace App\Filament\Resources\SeasonResource\Pages;
 
 use App\Filament\Resources\SeasonResource;
-use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditSeason extends EditRecord
 {
     protected static string $resource = SeasonResource::class;
 
-    protected function getHeaderActions(): array
+    protected function afterSave(): void
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        if (isset($this->data['episode_ids'])) {
+            $this->record->episodes()->sync($this->data['episode_ids']);
+        }
     }
 }

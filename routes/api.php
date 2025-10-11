@@ -1,97 +1,92 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+
+// Controllers
 use App\Http\Controllers\Api\PodcastController\PodcastController;
 use App\Http\Controllers\Api\EpisodeController\EpisodeController;
- use App\Http\Controllers\Api\CategoryController\CategoryController;
-use App\Http\Controllers\Api\PodcastController\PodcastRssController;
-use App\Http\Controllers\Api\FeedeController\FeedController;
-
-
-Route::prefix('v1')->group(function () {
-    Route::get('podcasts', [PodcastController::class, 'index']);
-    Route::get('podcasts/{id}', [PodcastController::class, 'show']);
-    Route::post('podcasts', [PodcastController::class, 'store']);
-    Route::put('podcasts/{id}', [PodcastController::class, 'update']);
-    Route::delete('podcasts/{id}', [PodcastController::class, 'destroy']);
-});
-
-
+use App\Http\Controllers\Api\CategoryController\CategoryController;
+use App\Http\Controllers\Api\PodcastRSSController\PodcastRssController;
+use App\Http\Controllers\Api\FeedController\FeedController;
 use App\Http\Controllers\Api\SeasonController\SeasonController;
-
-Route::prefix('v1')->group(function () {
-    Route::get('seasons', [SeasonController::class, 'index']);
-    Route::get('seasons/{id}', [SeasonController::class, 'show']);
-    Route::post('seasons', [SeasonController::class, 'store']);
-    Route::put('seasons/{id}', [SeasonController::class, 'update']);
-    Route::delete('seasons/{id}', [SeasonController::class, 'destroy']);
-});
-
-Route::apiResource('episodes', EpisodeController::class);
-
 use App\Http\Controllers\Api\EpisodeFileController\EpisodeFileController;
-
-Route::prefix('episode-files')->group(function () {
-    Route::post('/', [EpisodeFileController::class, 'store']);
-    Route::get('/{id}/edit', [EpisodeFileController::class, 'edit']);
-    Route::put('/{id}', [EpisodeFileController::class, 'update']);
-    Route::delete('/{id}', [EpisodeFileController::class, 'destroy']);
-});
 use App\Http\Controllers\Api\TranscriptController\TranscriptController;
-
-Route::prefix('transcripts')->group(function () {
-    Route::get('/', [TranscriptController::class, 'index']);
-    Route::get('/{id}', [TranscriptController::class, 'show']);
-    Route::post('/', [TranscriptController::class, 'store']);
-    Route::post('/{transcript}', [TranscriptController::class, 'update']);
-    Route::delete('/{transcript}', [TranscriptController::class, 'destroy']);
-});
-
 use App\Http\Controllers\Api\PersonController\PersonController;
-
-Route::prefix('people')->group(function () {
-    Route::get('/', [PersonController::class, 'index']);
-    Route::post('/', [PersonController::class, 'store']);
-    Route::get('/{id}', [PersonController::class, 'show']);
-    Route::put('/{id}', [PersonController::class, 'update']);
-    Route::delete('/{id}', [PersonController::class, 'destroy']);
-});
-
-
-Route::prefix('categories')->group(function () {
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-Route::get('/categories/{id}', [CategoryController::class, 'show'])->name('categories.show');
-Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
-Route::patch('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
-Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
-});
-
-
-Route::get('/rss/podcasts/{slug}', [PodcastRssController::class, 'show']);
-Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
-
 use App\Http\Controllers\Api\BlogController\BlogController;
 use App\Http\Controllers\Api\PostController\PostController;
+use App\Http\Controllers\Api\PlaylistController\PlaylistController;
+use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 
-Route::prefix('blogs')->group(function () {
-    Route::get('/', [BlogController::class, 'index']);
-    Route::get('/{id}', [BlogController::class, 'show']);
-    Route::post('/', [BlogController::class, 'store']);
-    Route::put('/{id}', [BlogController::class, 'update']);
-    Route::delete('/{id}', [BlogController::class, 'destroy']);
-});
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::prefix('posts')->group(function () {
-    Route::get('/', [PostController::class, 'index']);
-    Route::get('/{id}', [PostController::class, 'show']);
-    Route::post('/', [PostController::class, 'store']);
-    Route::put('/{id}', [PostController::class, 'update']);
-    Route::delete('/{id}', [PostController::class, 'destroy']);
-});
-use App\Http\Controllers\Admin\PlaylistController;
+Route::prefix('v1')->group(function () {
+    // 🎙️ Podcasts
+    Route::apiResource('podcasts', PodcastController::class);
 
-Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::apiResource('playlists', PlaylistController::class);
-    Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
+    // 📅 Seasons
+    Route::apiResource('seasons', SeasonController::class);
+
+    // 🎧 Episodes
+    Route::apiResource('episodes', EpisodeController::class);
+
+    // 📂 Episode Files
+    Route::prefix('episode-files')->group(function () {
+        Route::post('/', [EpisodeFileController::class, 'store']);
+        Route::get('/{id}/edit', [EpisodeFileController::class, 'edit']);
+        Route::put('/{id}', [EpisodeFileController::class, 'update']);
+        Route::delete('/{id}', [EpisodeFileController::class, 'destroy']);
+    });
+
+    // 📜 Transcripts
+    Route::apiResource('transcripts', TranscriptController::class);
+
+    // 👥 People
+    Route::apiResource('people', PersonController::class);
+
+    // 🏷️ Categories
+    Route::apiResource('categories', CategoryController::class);
+
+    // 📰 Blogs
+    Route::apiResource('blogs', BlogController::class);
+
+    // ✍️ Posts
+    Route::apiResource('posts', PostController::class);
+
+    // 🔊 RSS Feed
+    Route::get('/rss/podcasts/{slug}', [PodcastRssController::class, 'show']);
+    Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
+
+    // 📀 Releases
+Route::get('releases', [ReleaseController::class, 'index']);
+Route::middleware('auth:sanctum')->get('v1/releases/{id}/download', [ReleaseController::class, 'download']);
+
+    // 🎵 Admin Playlists (Protected)
+    Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+        Route::apiResource('playlists', PlaylistController::class);
+        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
+    });
+
+    // 🔐 Auth routes
+    Route::post('/login', function (Request $request) {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        $token = $user->createToken('user-token')->plainTextToken;
+        return response()->json(['token' => $token]);
+    });
+
+    Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
+        $request->user()->tokens()->delete();
+        return response()->json(['message' => 'Logged out']);
+    });
 });

@@ -73,81 +73,54 @@ class EpisodeResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('podcast_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('season_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('transcript_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('episode_number')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('short_description')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('duration_seconds')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('explicit')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('status'),
-                Tables\Columns\TextColumn::make('published_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\ImageColumn::make('cover_image'),
-                Tables\Columns\TextColumn::make('audio_url')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('video_url')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('file_size')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('mime_type')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
+{
+    return $table
+        ->columns([
+            Tables\Columns\TextColumn::make('podcast_id')
+                ->numeric()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('season_id')
+                ->numeric()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('episode_number')
+                ->numeric()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('title')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('slug')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('duration_seconds')
+                ->numeric()
+                ->sortable(),
+            Tables\Columns\IconColumn::make('explicit')->boolean(),
+            Tables\Columns\TextColumn::make('status'),
+            Tables\Columns\TextColumn::make('published_at')
+                ->dateTime()
+                ->sortable(),
+            Tables\Columns\ImageColumn::make('cover_image'),
+        ])
+        ->filters([
             //
-        ];
-    }
+        ])
+        ->actions([
+            Tables\Actions\ViewAction::make(), // 👈 add view button
+            Tables\Actions\EditAction::make(),
+            Tables\Actions\DeleteAction::make(),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+        ]);
+}
 
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListEpisodes::route('/'),
-            'create' => Pages\CreateEpisode::route('/create'),
-            'edit' => Pages\EditEpisode::route('/{record}/edit'),
-        ];
-    }
+public static function getPages(): array
+{
+    return [
+        'index' => Pages\ListEpisodes::route('/'),
+        'create' => Pages\CreateEpisode::route('/create'),
+        'view' => Pages\ViewEpisode::route('/{record}'), // 👈 add view route
+        'edit' => Pages\EditEpisode::route('/{record}/edit'),
+    ];
+}
 }

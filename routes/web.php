@@ -1,16 +1,27 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
-use App\Http\Controllers\Api\PodcastController\PodcastController;
 
-Route::prefix('v1')->group(function () {
-    Route::get('podcasts', [PodcastController::class, 'index']);          // list all
-    Route::get('podcasts/{id}', [PodcastController::class, 'show']);      // show single
-    Route::post('podcasts', [PodcastController::class, 'store']);         // create
-    Route::put('podcasts/{id}', [PodcastController::class, 'update']);   // update
-    Route::delete('podcasts/{id}', [PodcastController::class, 'destroy']); // delete
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+require __DIR__.'/auth.php';
+Route::get('/releases', function () {
+    return view('releases');
+});
+
+Route::get('/login', function () {
+    return view('auth.login'); // or your login view
+})->name('login');

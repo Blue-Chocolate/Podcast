@@ -18,6 +18,6 @@ class Season extends Model
 
     public function episodes()
     {
-        return $this->hasMany(Episode::class);
+        return $this->hasMany(Episode::class)->orderBy('episode_number');
     }
 }

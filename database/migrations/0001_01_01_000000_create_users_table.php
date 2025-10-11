@@ -15,8 +15,8 @@ return new class extends Migration
     $table->id();
     $table->string('name')->nullable();
     $table->string('email')->unique();
-    $table->string('password_hash');
-    $table->enum('role', ['admin','editor','uploader'])->default('uploader');
+    $table->string('password');
+    $table->enum('role', ['admin','editor','uploader','viewer'])->default('viewer');
     $table->string('avatar_url', 500)->nullable();
     $table->timestamps();
 });

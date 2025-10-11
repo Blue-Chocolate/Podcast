@@ -6,14 +6,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name','email','password_hash','role','avatar_url'];
+    protected $fillable = ['name','email','password','role','avatar_url'];
 
-    protected $hidden = ['password_hash'];
+    protected $hidden = ['password'];
 
     public function playlists()
     {
@@ -27,6 +28,10 @@ public function blogs()
 public function posts()
 {
     return $this->hasMany(Post::class);
+}
+ public function getAuthPassword()
+{
+    return $this->password;
 }
 
 }
