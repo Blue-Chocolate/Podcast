@@ -4,6 +4,8 @@ namespace App\Actions\Blogs;
 
 use App\Repositories\BlogRepository;
 use App\Models\Blog;
+use Illuminate\Support\Facades\Cache;
+
 
 class UpdateBlogAction
 {
@@ -14,8 +16,13 @@ class UpdateBlogAction
         $this->repository = $repository;
     }
 
-    public function execute(Blog $blog, array $data)
+     public function execute($blog, array $data)
     {
-        return $this->repository->update($blog, $data);
+        $blog->update($data);
+
+        Cache::forget('blogs_all');
+        Cache::forget("blog_{$blog->id}");
+
+        return $blog;
     }
 }

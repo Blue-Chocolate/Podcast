@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Redis;
 
 Route::get('/', function () {
     return view('welcome');
@@ -25,3 +26,9 @@ Route::get('/releases', function () {
 Route::get('/login', function () {
     return view('auth.login'); // or your login view
 })->name('login');
+
+
+Route::get('/redis-test', function () {
+    Redis::set('test-key', 'Hello Predis!');
+    return Redis::get('test-key');
+});

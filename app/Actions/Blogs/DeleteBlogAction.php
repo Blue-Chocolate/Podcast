@@ -4,6 +4,7 @@ namespace App\Actions\Blogs;
 
 use App\Repositories\BlogRepository;
 use App\Models\Blog;
+use Illuminate\Support\Facades\Cache;
 
 class DeleteBlogAction
 {
@@ -14,8 +15,11 @@ class DeleteBlogAction
         $this->repository = $repository;
     }
 
-    public function execute(Blog $blog)
+     public function execute($blog)
     {
-        return $this->repository->delete($blog);
+        $blog->delete();
+
+        Cache::forget('blogs_all');
+        Cache::forget("blog_{$blog->id}");
     }
 }

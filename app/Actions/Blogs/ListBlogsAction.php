@@ -3,6 +3,7 @@
 namespace App\Actions\Blogs;
 
 use App\Repositories\BlogRepository;
+use Illuminate\Support\Facades\Cache;
 
 class ListBlogsAction
 {
@@ -15,6 +16,8 @@ class ListBlogsAction
 
     public function execute()
     {
-        return $this->repository->all();
+        return Cache::remember('blogs_all', now()->addMinutes(30), function () {
+            return $this->repository->all();
+        });
     }
 }

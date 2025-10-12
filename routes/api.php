@@ -20,60 +20,15 @@ use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
 
 Route::prefix('v1')->group(function () {
-    // 🎙️ Podcasts
-    Route::apiResource('podcasts', PodcastController::class);
 
-    // 📅 Seasons
-    Route::apiResource('seasons', SeasonController::class);
-
-    // 🎧 Episodes
-    Route::apiResource('episodes', EpisodeController::class);
-
-    // 📂 Episode Files
-    Route::prefix('episode-files')->group(function () {
-        Route::post('/', [EpisodeFileController::class, 'store']);
-        Route::get('/{id}/edit', [EpisodeFileController::class, 'edit']);
-        Route::put('/{id}', [EpisodeFileController::class, 'update']);
-        Route::delete('/{id}', [EpisodeFileController::class, 'destroy']);
-    });
-
-    // 📜 Transcripts
-    Route::apiResource('transcripts', TranscriptController::class);
-
-    // 👥 People
-    Route::apiResource('people', PersonController::class);
-
-    // 🏷️ Categories
-    Route::apiResource('categories', CategoryController::class);
-
-    // 📰 Blogs
-    Route::apiResource('blogs', BlogController::class);
-
-    // ✍️ Posts
-    Route::apiResource('posts', PostController::class);
-
-    // 🔊 RSS Feed
+    // 🔓 Public routes
+    Route::get('releases', [ReleaseController::class, 'index']);
     Route::get('/rss/podcasts/{slug}', [PodcastRssController::class, 'show']);
     Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 
-    // 📀 Releases
-Route::get('releases', [ReleaseController::class, 'index']);
-Route::middleware('auth:sanctum')->get('v1/releases/{id}/download', [ReleaseController::class, 'download']);
-
-    // 🎵 Admin Playlists (Protected)
-    Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-        Route::apiResource('playlists', PlaylistController::class);
-        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
-    });
-
-    // 🔐 Auth routes
+    // 🔐 Authentication
     Route::post('/login', function (Request $request) {
         $user = User::where('email', $request->email)->first();
 
@@ -82,11 +37,38 @@ Route::middleware('auth:sanctum')->get('v1/releases/{id}/download', [ReleaseCont
         }
 
         $token = $user->createToken('user-token')->plainTextToken;
-        return response()->json(['token' => $token]);
+        return response()->json([
+            'token' => $token,
+            'role' => $user->role
+        ]);
     });
 
     Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out']);
     });
+
+
+    // 🧑 User routes (for users with role 'user')
+    Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
+        Route::apiResource('playlists', PlaylistController::class)->only(['index', 'show']);
+        Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
+    });
+
+
+    // 🧑‍💼 Admin routes (for users with role 'admin')
+    Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+        Route::apiResource('podcasts', PodcastController::class);
+        Route::apiResource('seasons', SeasonController::class);
+        Route::apiResource('episodes', EpisodeController::class);
+        Route::apiResource('episode-files', EpisodeFileController::class);
+        Route::apiResource('transcripts', TranscriptController::class);
+        Route::apiResource('people', PersonController::class);
+        Route::apiResource('categories', CategoryController::class);
+        Route::apiResource('blogs', BlogController::class);
+        Route::apiResource('posts', PostController::class);
+        Route::apiResource('playlists', PlaylistController::class);
+        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
+    });
+
 });

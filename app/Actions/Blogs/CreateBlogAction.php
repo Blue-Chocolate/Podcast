@@ -3,6 +3,8 @@
 namespace App\Actions\Blogs;
 
 use App\Repositories\BlogRepository;
+use Illuminate\Support\Facades\Cache;
+
 
 class CreateBlogAction
 {
@@ -15,6 +17,8 @@ class CreateBlogAction
 
     public function execute(array $data)
     {
-        return $this->repository->create($data);
+        $blog = \App\Models\Blog::create($data);
+        Cache::forget('blogs_all'); // invalidate list cache
+        return $blog;
     }
 }
