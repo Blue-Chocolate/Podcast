@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PlaylistResource\Pages;
-use App\Models\Episode;
 use App\Models\Playlist;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,35 +15,38 @@ class PlaylistResource extends Resource
 {
     protected static ?string $model = Playlist::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationGroup = 'Podcasts Management';
-    protected static ?string $modelLabel = 'Playlist';
+    protected static ?string $navigationGroup = 'إدارة البودكاستات';
+    protected static ?string $modelLabel = 'قائمة التشغيل';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('title')
+                    ->label('العنوان')
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state)))
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('slug')
+                    ->label('المعرف (slug)')
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
                 Forms\Components\Textarea::make('description')
+                    ->label('الوصف')
                     ->rows(3)
                     ->maxLength(1000),
 
                 Forms\Components\Select::make('episode_ids')
-                    ->label('Episodes')
+                    ->label('الحلقات')
                     ->multiple()
                     ->relationship('episodes', 'title')
                     ->preload()
                     ->searchable()
-                    ->helperText('Pick one or more episodes to include in this playlist.'),
+                    ->helperText('اختر حلقة أو أكثر لتضمينها في هذه القائمة.'),
 
                 Forms\Components\Hidden::make('created_by')
                     ->default(fn() => auth()->id()),
@@ -56,19 +58,19 @@ class PlaylistResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->label('ID')->sortable(),
-                Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('slug')->searchable(),
-                Tables\Columns\TextColumn::make('creator.name')->label('Created By')->default('N/A'),
-                Tables\Columns\TextColumn::make('episodes_count')->counts('episodes')->label('Episodes'),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created'),
+                Tables\Columns\TextColumn::make('title')->label('العنوان')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('slug')->label('المعرف (slug)')->searchable(),
+                Tables\Columns\TextColumn::make('creator.name')->label('تم الإنشاء بواسطة')->default('N/A'),
+                Tables\Columns\TextColumn::make('episodes_count')->label('عدد الحلقات')->counts('episodes'),
+                Tables\Columns\TextColumn::make('created_at')->label('تاريخ الإنشاء')->dateTime(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()->label('عرض'),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()->label('حذف'),
             ]);
     }
 

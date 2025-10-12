@@ -7,7 +7,7 @@ use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Filament\Resources\Form;
+use Filament\Forms\Form; // Correct import for Filament v3
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -20,65 +20,77 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Admin';
+    protected static ?string $navigationGroup = 'إدارة';
 
-    // Only admin can view this resource
+    // Model labels بالعربي
+    public static function getModelLabel(): string
+    {
+        return 'مستخدم';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'المستخدمين';
+    }
+
+    // فقط المدير يمكنه الوصول
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasRole('admin') ?? false;
     }
 
-    // Form for Create/Edit
+    // Form للإنشاء والتعديل
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form
             ->schema([
                 TextInput::make('name')
+                    ->label('الاسم')
                     ->required()
                     ->maxLength(255),
 
                 TextInput::make('email')
+                    ->label('البريد الإلكتروني')
                     ->email()
                     ->required()
                     ->unique(ignoreRecord: true),
 
                 TextInput::make('password')
+                    ->label('كلمة المرور')
                     ->password()
-                    ->required(fn($record) => !$record) // required on create
+                    ->required(fn($record) => !$record)
                     ->dehydrateStateUsing(fn($state) => filled($state) ? Hash::make($state) : null)
                     ->dehydrated(fn($state) => filled($state)),
 
                 Select::make('roles')
+                    ->label('الأدوار')
                     ->multiple()
                     ->relationship('roles', 'name')
                     ->preload(),
             ]);
     }
 
-    // Table for listing
+    // Table لعرض المستخدمين
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('email')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')->label('Roles')->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
-            ])
-            ->filters([
-                //
+                Tables\Columns\TextColumn::make('id')->label('الرقم')->sortable(),
+                Tables\Columns\TextColumn::make('name')->label('الاسم')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('email')->label('البريد الإلكتروني')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('roles.name')->label('الأدوار')->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->label('تاريخ الإنشاء')->dateTime()->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()->label('حذف جماعي'),
             ]);
     }
 
-    // Cache users to optimize listing
+    // Cache المستخدمين لتحسين الأداء
     public static function getCachedUsers()
     {
         return Cache::remember('users.all', now()->addMinutes(10), function () {
@@ -86,7 +98,7 @@ class UserResource extends Resource
         });
     }
 
-    // Clear cache when users are saved or deleted
+    // مسح الكاش عند الإضافة أو التعديل أو الحذف
     public static function boot(): void
     {
         parent::boot();
@@ -100,7 +112,7 @@ class UserResource extends Resource
         });
     }
 
-    // Filament pages
+    // صفحات Filament
     public static function getPages(): array
     {
         return [

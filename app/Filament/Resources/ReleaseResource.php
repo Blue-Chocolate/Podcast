@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ReleaseResource\Pages;
-use App\Filament\Resources\ReleaseResource\RelationManagers;
 use App\Models\Release;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,34 +16,44 @@ class ReleaseResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    public static function getModelLabel(): string
+    {
+        return 'إصدار';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'الإصدارات';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('title')
-                    ->label('Title')
+                    ->label('العنوان')
                     ->required()
                     ->maxLength(255),
 
                 Forms\Components\Textarea::make('description')
-                    ->label('Description')
+                    ->label('الوصف')
                     ->rows(3)
                     ->columnSpanFull(),
 
                 Forms\Components\FileUpload::make('file_path')
-                    ->label('PDF File')
+                    ->label('ملف PDF')
                     ->directory('releases')
                     ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(10240) // 10MB
+                    ->maxSize(10240)
                     ->required()
                     ->downloadable()
                     ->openable(),
 
                 Forms\Components\FileUpload::make('image')
-                    ->label('Cover Image')
+                    ->label('صورة الغلاف')
                     ->directory('releases/images')
                     ->image()
-                    ->maxSize(2048) // 2MB
+                    ->maxSize(2048)
                     ->imageEditor(),
             ]);
     }
@@ -54,31 +63,31 @@ class ReleaseResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('title')
+                    ->label('العنوان')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('description')
+                    ->label('الوصف')
                     ->limit(50)
                     ->searchable(),
 
                 Tables\Columns\ImageColumn::make('image')
-                    ->label('Cover'),
+                    ->label('الغلاف'),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
             ])
-            ->filters([
-                //
-            ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
                 ]),
             ]);
     }
