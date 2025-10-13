@@ -7,13 +7,12 @@ use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form; // Correct import for Filament v3
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -22,7 +21,7 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'إدارة';
 
-    // Model labels بالعربي
+    // Labels بالعربي
     public static function getModelLabel(): string
     {
         return 'مستخدم';
@@ -83,10 +82,21 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('تعديل'),
-                Tables\Actions\DeleteAction::make()->label('حذف'),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('حذف')
+                    ->visible(fn($record) => $record->id !== auth()->id()) // تمنع حذف النفس
+                    ->before(function ($record) {
+                        if ($record->id === auth()->id()) {
+                            $this->notify('danger', 'لا يمكنك حذف حسابك الشخصي.');
+                            return false;
+                        }
+                    }),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()->label('حذف جماعي'),
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label('حذف جماعي')
+                    ->visible(fn($records) => !collect($records)->contains(fn($r) => $r->id === auth()->id())), // تمنع حذف النفس جماعياً
             ]);
     }
 

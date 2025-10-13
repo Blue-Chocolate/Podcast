@@ -15,6 +15,8 @@ return new class extends Migration
     $table->id();
     $table->string('title');
     $table->string('file_path');
+    $table->string('excel_path')->nullable();
+    $table->string('powerbi_path')->nullable();
     $table->text('description')->nullable();
     $table->string('image', 255)->nullable();
     $table->timestamps();

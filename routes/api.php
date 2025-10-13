@@ -72,3 +72,10 @@ Route::prefix('v1')->group(function () {
     });
 
 });
+
+Route::get('/', [ReleaseController::class, 'index']); // عرض كل الريليزز
+    Route::post('/', [ReleaseController::class, 'store'])->middleware('auth:sanctum'); // رفع الملفات (Admins)
+    Route::get('/{id}/download/{type?}', [ReleaseController::class, 'download'])
+        ->where('type', 'pdf|excel|powerbi');
+
+        

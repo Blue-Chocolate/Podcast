@@ -23,11 +23,55 @@ class ReleaseController extends Controller
     }
 
     /**
-     * Download release file (requires authentication)
+     * Store a new release (admin only)
      */
-    public function download($id)
+    public function store(Request $request)
     {
-        // Check if user is authenticated (supports both Sanctum token and session)
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'nullable|file|mimes:pdf|max:20480',
+            'excel' => 'nullable|file|mimes:xlsx,xls|max:20480',
+            'powerbi' => 'nullable|file|mimes:pbix|max:51200',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+        ]);
+
+        $pdfPath = $request->hasFile('file')
+            ? $request->file('file')->store('releases', 'public')
+            : null;
+
+        $excelPath = $request->hasFile('excel')
+            ? $request->file('excel')->store('releases', 'public')
+            : null;
+
+        $powerbiPath = $request->hasFile('powerbi')
+            ? $request->file('powerbi')->store('releases', 'public')
+            : null;
+
+        $imagePath = $request->hasFile('image')
+            ? $request->file('image')->store('releases/images', 'public')
+            : null;
+
+        $release = Release::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'file_path' => $pdfPath,
+            'excel_path' => $excelPath,
+            'powerbi_path' => $powerbiPath,
+            'image' => $imagePath,
+        ]);
+
+        return response()->json([
+            'message' => 'Release created successfully',
+            'data' => $release
+        ]);
+    }
+
+    /**
+     * Download file (requires authentication)
+     */
+    public function download($id, $type = 'pdf')
+    {
         if (!Auth::guard('sanctum')->check() && !Auth::check()) {
             return response()->json([
                 'error' => 'Unauthorized. Please login first.',
@@ -35,21 +79,35 @@ class ReleaseController extends Controller
             ], 401);
         }
 
-        // Find the release
         $release = Release::find($id);
-        
         if (!$release) {
             return response()->json(['error' => 'Release not found.'], 404);
         }
 
-        // Check if file exists
-        $path = storage_path('app/public/' . $release->file_path);
+        // Determine file path
+        $path = match ($type) {
+            'pdf' => $release->file_path,
+            'excel' => $release->excel_path,
+            'powerbi' => $release->powerbi_path,
+            default => null,
+        };
 
-        if (!file_exists($path)) {
+        if (!$path) {
+            return response()->json(['error' => 'File type not found.'], 404);
+        }
+
+        $fullPath = storage_path('app/public/' . $path);
+
+        if (!file_exists($fullPath)) {
             return response()->json(['error' => 'File not found.'], 404);
         }
 
-        // Return the file for download
-        return response()->download($path, $release->title . '.pdf');
+        $fileName = $release->title . '.' . match ($type) {
+            'pdf' => 'pdf',
+            'excel' => 'xlsx',
+            'powerbi' => 'pbix',
+        };
+
+        return response()->download($fullPath, $fileName);
     }
 }

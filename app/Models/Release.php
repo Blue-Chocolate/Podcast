@@ -10,6 +10,8 @@ class Release extends Model
         'title',
         'description',
         'file_path',
+        'excel_path',
+        'powerbi_path',
         'image',
     ];
 }
