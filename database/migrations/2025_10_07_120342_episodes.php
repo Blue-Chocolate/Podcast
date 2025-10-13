@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('video_url')->nullable();   // optional video
             $table->integer('file_size')->nullable();  // file size in bytes
             $table->string('mime_type')->nullable();   // e.g. audio/mpeg or video/mp4
+            
 
             $table->timestamps();
 

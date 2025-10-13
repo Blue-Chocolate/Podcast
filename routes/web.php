@@ -32,3 +32,8 @@ Route::get('/redis-test', function () {
     Redis::set('test-key', 'Hello Predis!');
     return Redis::get('test-key');
 });
+
+
+Route::get('/forms', function () {
+    return view('forms');
+})->middleware(['auth', 'verified'])->name('forms');

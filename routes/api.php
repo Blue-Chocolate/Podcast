@@ -19,13 +19,14 @@ use App\Http\Controllers\Api\BlogController\BlogController;
 use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
+use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 
 
 Route::prefix('v1')->group(function () {
 
     // 🔓 Public routes
     Route::get('releases', [ReleaseController::class, 'index']);
-    Route::get('/rss/podcasts/{slug}', [PodcastRssController::class, 'show']);
+Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'show']);
     Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 
     // 🔐 Authentication
@@ -78,4 +79,4 @@ Route::get('/', [ReleaseController::class, 'index']); // عرض كل الريل�
     Route::get('/{id}/download/{type?}', [ReleaseController::class, 'download'])
         ->where('type', 'pdf|excel|powerbi');
 
-        
+Route::post('/submissions', [SubmissionController::class, 'store']);
