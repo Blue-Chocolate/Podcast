@@ -19,6 +19,7 @@ $table->decimal('total_score', 6, 2)->nullable();
 $table->timestamp('submitted_at')->nullable();
 $table->timestamp('announced_at')->nullable();
 $table->json('meta')->nullable(); // flexible for extra fields
+
 $table->timestamps();
 });
 }

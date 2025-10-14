@@ -3,7 +3,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Submission_Answer;
+use App\Models\SubmissionAnswer;
 
 class SubmissionAnswerRepository
 {
@@ -16,7 +16,7 @@ class SubmissionAnswerRepository
 
         $axisPoints = ($q1?5:0) + ($q2?5:0) + ($q3?5:0) + ($q4?5:0);
 
-        Submission_Answer::create([
+        SubmissionAnswer::create([
             'submission_id' => $submissionId,
             'axis' => $axisAnswer['axis'],
             'q1' => $q1,

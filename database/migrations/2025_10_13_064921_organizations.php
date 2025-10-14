@@ -19,6 +19,9 @@ $table->date('established_at')->nullable();
 $table->string('email')->nullable();
 $table->string('phone')->nullable();
 $table->text('address')->nullable();
+      $table->string('strategy_plan_path')->nullable();
+        $table->string('financial_report_path')->nullable();
+        $table->string('structure_chart_path')->nullable();
 $table->timestamps();
 });
 }

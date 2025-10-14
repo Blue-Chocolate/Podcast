@@ -12,7 +12,7 @@ class Submission extends Model
 use HasFactory;
 
 
-protected $fillable = ['organization_id','status','total_score','submitted_at','announced_at','meta'];
+protected $fillable = ['organization_id','status','total_score','submitted_at','announced_at','meta',];
 
 
 protected $casts = [
@@ -24,7 +24,7 @@ protected $casts = [
 
 
 public function organization() { return $this->belongsTo(Organization::class); }
-public function answers() { return $this->hasMany(Submission_Answer::class); }
+public function answers() { return $this->hasMany(SubmissionAnswer::class); }
 public function attachments() { return $this->hasMany(Attachment::class); }
 public function reviews() { return $this->hasMany(Review::class); }
 }

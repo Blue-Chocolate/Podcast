@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EpisodeResource extends Resource
 {
@@ -94,23 +95,32 @@ class EpisodeResource extends Resource
 
             // رفع الفيديو
             Forms\Components\FileUpload::make('video_url')
-                ->label('رفع الفيديو')
-                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                ->disk('videos')
-                ->directory('videos')
-                ->visibility('public')
-                ->maxSize(512000) // 500 MB
-                ->nullable(),
+    ->label('رفع الفيديو')
+    ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
+    ->disk('videos')
+    ->directory('videos')
+    ->visibility('public')
+    ->maxSize(512000)
+    ->nullable()
+    ->storeFileNamesIn('video_filename') // Store original filename
+    ->getUploadedFileNameForStorageUsing(
+        fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+            ->prepend(now()->timestamp . '_')
+    ),
 
-            // رفع الصوت
-            Forms\Components\FileUpload::make('audio_url')
-                ->label('رفع الصوت')
-                ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
-                ->disk('videos')
-                ->directory('audios')
-                ->visibility('public')
-                ->maxSize(51200) // 50 MB
-                ->nullable(),
+Forms\Components\FileUpload::make('audio_url')
+    ->label('رفع الصوت')
+    ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
+    ->disk('videos')
+    ->directory('audios')
+    ->visibility('public')
+    ->maxSize(51200)
+    ->nullable()
+    ->storeFileNamesIn('audio_filename')
+    ->getUploadedFileNameForStorageUsing(
+        fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+            ->prepend(now()->timestamp . '_')
+    ),
         ]);
     }
 

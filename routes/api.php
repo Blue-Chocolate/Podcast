@@ -20,6 +20,10 @@ use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 use App\Http\Controllers\Api\SubmissionController\SubmissionController;
+use App\Http\Controllers\API\OrganizationController\OrganizationController;
+use App\Http\Controllers\Api\OrganizationController\OrganizationSubmissionController;
+
+use App\Http\Controllers\API\OrganizationController\RegisterController;
 
 
 Route::prefix('v1')->group(function () {
@@ -80,3 +84,7 @@ Route::get('/', [ReleaseController::class, 'index']); // عرض كل الريل�
         ->where('type', 'pdf|excel|powerbi');
 
 Route::post('/submissions', [SubmissionController::class, 'store']);
+
+Route::post('/organizations', [OrganizationController::class, 'store']);
+Route::post('/organization/submit', [OrganizationSubmissionController::class, 'store']);
+Route::post('/organization/register', [RegisterController::class, 'register']);

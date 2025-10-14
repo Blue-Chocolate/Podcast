@@ -11,8 +11,17 @@ class Organization extends Model
 {
 use HasFactory;
 
-
-protected $fillable = ['name','sector','established_at','email','phone','address'];
+protected $fillable = [
+    'name',
+    'sector',
+    'established_at',
+    'email',
+    'phone',
+    'address',
+    'strategy_plan_path',
+    'financial_report_path',
+    'structure_chart_path',
+];
 
 
 protected $dates = ['established_at'];
