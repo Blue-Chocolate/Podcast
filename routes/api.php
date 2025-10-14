@@ -26,7 +26,7 @@ Route::prefix('v1')->group(function () {
 
     // 🔓 Public routes
     Route::get('releases', [ReleaseController::class, 'index']);
-Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'show']);
+Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show'])  ->name('podcast.rss');
     Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 
     // 🔐 Authentication

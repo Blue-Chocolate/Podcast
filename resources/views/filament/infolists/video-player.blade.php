@@ -6,9 +6,13 @@
                 class="absolute top-0 left-0 w-full h-full"
                 preload="metadata"
             >
-                <source src="{{ $getRecord()->video_url }}" type="{{ $getRecord()->mime_type ?? 'video/mp4' }}">
+                <source src="{{ asset($getRecord()->video_url) }}" type="{{ $getRecord()->mime_type ?? 'video/mp4' }}">
                 Your browser does not support the video tag.
             </video>
+        </div>
+    @else
+        <div class="text-gray-500 text-center py-8">
+            لا يوجد فيديو متاح
         </div>
     @endif
 </div>

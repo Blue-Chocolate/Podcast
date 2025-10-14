@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redis;
+use App\Http\Controllers\Api\PodcastRssController\PodcastRssController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -37,3 +39,6 @@ Route::get('/redis-test', function () {
 Route::get('/forms', function () {
     return view('forms');
 })->middleware(['auth', 'verified'])->name('forms');
+
+Route::get('/api/rss/podcast/{slug}', [PodcastRssController::class, 'show'])
+    ->name('podcast.rss');
