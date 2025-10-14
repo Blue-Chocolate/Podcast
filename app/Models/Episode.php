@@ -1,21 +1,88 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Episode extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'podcast_id', 'season_id', 'episode_number', 'title', 'slug',
+        'description', 'short_description', 'duration_seconds', 'explicit',
+        'status', 'published_at', 'cover_image', 'video_url', 'audio_url',
+        'file_size', 'mime_type'
+    ];
 
-   protected $fillable = [
-    'podcast_id', 'season_id', 'title', 'slug', 'description',
-    'short_description', 'duration_seconds', 'status', 'cover_image',
-    'transcript_id', 'audio_url', 'video_url', 'file_size', 'mime_type', 'published_at'
-];
+    protected $casts = [
+        'published_at' => 'datetime',
+        'explicit' => 'boolean',
+    ];
 
-    protected $dates = ['published_at'];
+    // Add these to prevent accessor conflicts with Filament
+    protected $appends = [];
 
+    /**
+     * Get the full URL for the video
+     */
+    public function getVideoUrlFullAttribute()
+    {
+        if (empty($this->attributes['video_url'])) {
+            return null;
+        }
+        
+        $value = $this->attributes['video_url'];
+        
+        // If it's already a full URL, return as-is
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+        
+        // Generate URL using asset helper for public storage
+        return asset('storage/episodes/' . $value);
+    }
+
+    /**
+     * Get the full URL for the audio
+     */
+    public function getAudioUrlFullAttribute()
+    {
+        if (empty($this->attributes['audio_url'])) {
+            return null;
+        }
+        
+        $value = $this->attributes['audio_url'];
+        
+        // If it's already a full URL, return as-is
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+        
+        // Generate URL using asset helper for public storage
+        return asset('storage/episodes/' . $value);
+    }
+
+    /**
+     * Get the full URL for the cover image
+     */
+    public function getCoverImageFullAttribute()
+    {
+        if (empty($this->attributes['cover_image'])) {
+            return null;
+        }
+        
+        $value = $this->attributes['cover_image'];
+        
+        // If it's already a full URL, return as-is
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+        
+        // Generate URL using asset helper for public storage
+        return asset('storage/episodes/' . $value);
+    }
+
+    // Relationships
     public function podcast()
     {
         return $this->belongsTo(Podcast::class);
@@ -25,55 +92,4 @@ class Episode extends Model
     {
         return $this->belongsTo(Season::class);
     }
-
-    public function transcript()
-    {
-        return $this->hasOne(Transcript::class);
-    }
-
-    public function files()
-    {
-        return $this->hasMany(EpisodeFile::class);
-    }
-
-    public function hosts()
-    {
-        return $this->belongsToMany(Person::class, 'episode_hosts');
-    }
-
-    public function guests()
-    {
-        return $this->belongsToMany(Person::class, 'episode_guests')->withPivot('role');
-    }
-
-    public function categories()
-    {
-        return $this->belongsToMany(Category::class, 'episode_categories');
-    }
-
-    public function tags()
-    {
-        return $this->belongsToMany(Tag::class, 'episode_tags');
-    }
-
-    public function sponsors()
-    {
-        return $this->belongsToMany(Sponsor::class, 'episode_sponsors')->withPivot('position');
-    }
-
-    public function plays()
-    {
-        return $this->hasMany(Play::class);
-    }
-
-    public function playlists()
-    {
-        return $this->belongsToMany(Playlist::class, 'playlist_episodes')->withPivot('ord');
-    }
-
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-    
 }

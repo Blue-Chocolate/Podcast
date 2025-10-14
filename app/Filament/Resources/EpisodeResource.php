@@ -9,9 +9,9 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EpisodeResource extends Resource
 {
@@ -86,41 +86,40 @@ class EpisodeResource extends Resource
             Forms\Components\DateTimePicker::make('published_at')
                 ->label('تاريخ النشر'),
 
+            // Cover image
             Forms\Components\FileUpload::make('cover_image')
                 ->label('صورة الغلاف')
                 ->image()
-                ->disk('videos')
+                ->disk('episodes')
                 ->directory('covers')
-                ->visibility('public'),
+                ->visibility('public')
+                ->maxSize(10240),
 
-            // رفع الفيديو
+            // Video upload
             Forms\Components\FileUpload::make('video_url')
-    ->label('رفع الفيديو')
-    ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-    ->disk('videos')
-    ->directory('videos')
-    ->visibility('public')
-    ->maxSize(512000)
-    ->nullable()
-    ->storeFileNamesIn('video_filename') // Store original filename
-    ->getUploadedFileNameForStorageUsing(
-        fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-            ->prepend(now()->timestamp . '_')
-    ),
+                ->label('رفع الفيديو')
+                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
+                ->disk('episodes')
+                ->directory('videos')
+                ->visibility('public')
+                ->maxSize(512000)
+                ->nullable()
+                ->getUploadedFileNameForStorageUsing(
+                    fn ($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                ),
 
-Forms\Components\FileUpload::make('audio_url')
-    ->label('رفع الصوت')
-    ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
-    ->disk('videos')
-    ->directory('audios')
-    ->visibility('public')
-    ->maxSize(51200)
-    ->nullable()
-    ->storeFileNamesIn('audio_filename')
-    ->getUploadedFileNameForStorageUsing(
-        fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-            ->prepend(now()->timestamp . '_')
-    ),
+            // Audio upload
+            Forms\Components\FileUpload::make('audio_url')
+                ->label('رفع الصوت')
+                ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
+                ->disk('episodes')
+                ->directory('audios')
+                ->visibility('public')
+                ->maxSize(51200)
+                ->nullable()
+                ->getUploadedFileNameForStorageUsing(
+                    fn ($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                ),
         ]);
     }
 
@@ -135,34 +134,28 @@ Forms\Components\FileUpload::make('audio_url')
 
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('معاينة الفيديو')
-                    ->formatStateUsing(function($state) {
-                        if (!$state) return '-';
-                        
-                        $url = asset($state);
-                        
-                        return new HtmlString('
-                            <video width="200" controls preload="metadata">
-                                <source src="'.$url.'" type="video/mp4">
+                    ->formatStateUsing(fn ($state, $record) => $state
+                        ? new HtmlString("
+                            <video width='200' controls preload='metadata'>
+                                <source src='" . asset('storage/episodes/' . $record->getRawOriginal('video_url')) . "' type='video/mp4'>
                                 Your browser does not support the video tag.
                             </video>
-                        ');
-                    })
+                        ")
+                        : '-'
+                    )
                     ->html(),
 
                 Tables\Columns\TextColumn::make('audio_url')
                     ->label('معاينة الصوت')
-                    ->formatStateUsing(function($state) {
-                        if (!$state) return '-';
-                        
-                        $url = asset($state);
-                        
-                        return new HtmlString('
-                            <audio controls preload="metadata">
-                                <source src="'.$url.'" type="audio/mpeg">
+                    ->formatStateUsing(fn ($state) => $state
+                        ? new HtmlString("
+                            <audio controls preload='metadata'>
+                                <source src='" . asset('storage/episodes/' . $state) . "' type='audio/mpeg'>
                                 Your browser does not support the audio tag.
                             </audio>
-                        ');
-                    })
+                        ")
+                        : '-'
+                    )
                     ->html(),
             ])
             ->actions([

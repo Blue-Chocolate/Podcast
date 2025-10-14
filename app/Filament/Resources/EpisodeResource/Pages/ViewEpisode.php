@@ -8,6 +8,7 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Facades\Storage;
 
 class ViewEpisode extends ViewRecord
 {
@@ -34,10 +35,39 @@ class ViewEpisode extends ViewRecord
                             ->visible(fn ($record) => !empty($record->video_url)),
                         Infolists\Components\TextEntry::make('video_url')
                             ->label('Video URL')
-                            ->url(fn ($record) => $record->video_url, shouldOpenInNewTab: true)
+                            ->formatStateUsing(fn ($state, $record) => 
+                                $record->video_url_full ?? asset('storage/episodes/' . $state)
+                            )
+                            ->url(fn ($state, $record) => 
+                                $record->video_url_full ?? asset('storage/episodes/' . $state), 
+                                shouldOpenInNewTab: true
+                            )
+                            ->copyable()
                             ->visible(fn ($record) => !empty($record->video_url)),
                     ])
                     ->visible(fn ($record) => !empty($record->video_url))
+                    ->collapsible(),
+
+                // Audio Section (if exists)
+                Infolists\Components\Section::make('Audio')
+                    ->schema([
+                        Infolists\Components\ViewEntry::make('audio_url')
+                            ->label('')
+                            ->view('filament.infolists.audio-player')
+                            ->visible(fn ($record) => !empty($record->audio_url)),
+                        Infolists\Components\TextEntry::make('audio_url')
+                            ->label('Audio URL')
+                            ->formatStateUsing(fn ($state, $record) => 
+                                $record->audio_url_full ?? asset('storage/episodes/' . $state)
+                            )
+                            ->url(fn ($state, $record) => 
+                                $record->audio_url_full ?? asset('storage/episodes/' . $state), 
+                                shouldOpenInNewTab: true
+                            )
+                            ->copyable()
+                            ->visible(fn ($record) => !empty($record->audio_url)),
+                    ])
+                    ->visible(fn ($record) => !empty($record->audio_url))
                     ->collapsible(),
 
                 // Episode Information
@@ -70,7 +100,9 @@ class ViewEpisode extends ViewRecord
                             ->schema([
                                 Infolists\Components\ImageEntry::make('cover_image')
                                     ->label('Cover Image')
-                                    ->columnSpan(3),
+                                    ->disk('episodes')
+                                    ->columnSpan(3)
+                                    ->visible(fn ($record) => !empty($record->cover_image)),
                                 Infolists\Components\TextEntry::make('duration_seconds')
                                     ->label('Duration')
                                     ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state)),
@@ -79,11 +111,6 @@ class ViewEpisode extends ViewRecord
                                     ->formatStateUsing(fn ($state) => $state ? number_format($state / 1048576, 2) . ' MB' : 'N/A'),
                                 Infolists\Components\TextEntry::make('mime_type')
                                     ->label('MIME Type'),
-                                Infolists\Components\TextEntry::make('audio_url')
-                                    ->label('Audio URL')
-                                    ->url(fn ($record) => $record->audio_url, shouldOpenInNewTab: true)
-                                    ->columnSpan(3)
-                                    ->visible(fn ($record) => !empty($record->audio_url)),
                             ]),
                     ])
                     ->collapsible(),

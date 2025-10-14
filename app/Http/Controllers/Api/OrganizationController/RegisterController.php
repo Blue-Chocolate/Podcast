@@ -53,11 +53,15 @@ class RegisterController extends Controller
             if ($request->hasFile('strategic_plan')) {
                 $strategicPlanPath = $request->file('strategic_plan')
                     ->store("uploads/organizations/{$organization->id}", 'public');
+                // Update organization with file path
+                $organization->update(['strategy_plan_path' => $strategicPlanPath]);
             }
 
             if ($request->hasFile('financial_report')) {
                 $financialReportPath = $request->file('financial_report')
                     ->store("uploads/organizations/{$organization->id}", 'public');
+                // Update organization with file path
+                $organization->update(['financial_report_path' => $financialReportPath]);
             }
 
             // Calculate total score
@@ -74,15 +78,15 @@ class RegisterController extends Controller
 
             DB::commit();
 
-            // Send email with result (Fixed: Pass $organization, $totalScore, and $submission)
-            Mail::to($organization->email)->send(new SubmissionResultMail($organization, $totalScore, $submission));
+            // Send email with result
+            Mail::to($organization->email)->queue(new SubmissionResultMail($organization, $totalScore, $submission));
 
             return response()->json([
                 'success' => true,
                 'submission_id' => $submission->id,
                 'status' => 'submitted',
                 'total_score' => $totalScore,
-            ]);
+            ], 201);
         } catch (Exception $e) {
             DB::rollBack();
 

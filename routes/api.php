@@ -3,9 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Models\User;
 
-// Controllers
+// 🎧 Controllers
 use App\Http\Controllers\Api\PodcastController\PodcastController;
 use App\Http\Controllers\Api\EpisodeController\EpisodeController;
 use App\Http\Controllers\Api\CategoryController\CategoryController;
@@ -20,20 +21,29 @@ use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 use App\Http\Controllers\Api\SubmissionController\SubmissionController;
-use App\Http\Controllers\API\OrganizationController\OrganizationController;
+use App\Http\Controllers\Api\OrganizationController\OrganizationController;
 use App\Http\Controllers\Api\OrganizationController\OrganizationSubmissionController;
+use App\Http\Controllers\Api\OrganizationController\RegisterController;
 
-use App\Http\Controllers\API\OrganizationController\RegisterController;
 
-
+// ======================================================
+// 📦 API v1 Routes
+// ======================================================
 Route::prefix('v1')->group(function () {
 
-    // 🔓 Public routes
-    Route::get('releases', [ReleaseController::class, 'index']);
-Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show'])  ->name('podcast.rss');
+    // ==================================================
+    // 🔓 PUBLIC ROUTES
+    // ==================================================
+    Route::get('/releases', [ReleaseController::class, 'index']);
+    Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show'])->name('podcast.rss');
     Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 
-    // 🔐 Authentication
+
+    // ==================================================
+    // 🔐 AUTHENTICATION ROUTES
+    // ==================================================
+
+    // 🧾 Login
     Route::post('/login', function (Request $request) {
         $user = User::where('email', $request->email)->first();
 
@@ -42,49 +52,72 @@ Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show'])  ->name
         }
 
         $token = $user->createToken('user-token')->plainTextToken;
+
         return response()->json([
             'token' => $token,
-            'role' => $user->role
+            'role'  => $user->role,
         ]);
     });
 
+    // 🚪 Logout
     Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out']);
     });
 
 
-    // 🧑 User routes (for users with role 'user')
+    // ==================================================
+    // 🧑 USER ROUTES (role: user)
+    // ==================================================
     Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
         Route::apiResource('playlists', PlaylistController::class)->only(['index', 'show']);
         Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
     });
 
 
-    // 🧑‍💼 Admin routes (for users with role 'admin')
-    Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+    // ==================================================
+    // 🧑‍💼 ADMIN ROUTES (role: admin)
+    // ==================================================
+    Route::middleware(['auth:sanctum', 'role:admin'])
+        ->prefix('admin')
+        ->group(function () {
+
+        // 🎧 Podcast Management
         Route::apiResource('podcasts', PodcastController::class);
         Route::apiResource('seasons', SeasonController::class);
         Route::apiResource('episodes', EpisodeController::class);
         Route::apiResource('episode-files', EpisodeFileController::class);
         Route::apiResource('transcripts', TranscriptController::class);
+
+        // 👥 People & Categories
         Route::apiResource('people', PersonController::class);
         Route::apiResource('categories', CategoryController::class);
+
+        // 📝 Blogs & Posts
         Route::apiResource('blogs', BlogController::class);
         Route::apiResource('posts', PostController::class);
+
+        // 🎵 Playlists
         Route::apiResource('playlists', PlaylistController::class);
         Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
     });
-
 });
 
-Route::get('/', [ReleaseController::class, 'index']); // عرض كل الريليزز
-    Route::post('/', [ReleaseController::class, 'store'])->middleware('auth:sanctum'); // رفع الملفات (Admins)
-    Route::get('/{id}/download/{type?}', [ReleaseController::class, 'download'])
-        ->where('type', 'pdf|excel|powerbi');
 
+// ======================================================
+// 🌍 PUBLIC WEBSITE ROUTES
+// ======================================================
+
+// 📰 Releases
+Route::get('/', [ReleaseController::class, 'index']); // عرض كل الريليزز
+Route::post('/', [ReleaseController::class, 'store'])->middleware('auth:sanctum'); // رفع الملفات (Admins)
+Route::get('/{id}/download/{type?}', [ReleaseController::class, 'download'])
+    ->where('type', 'pdf|excel|powerbi');
+
+// 📨 Submissions
 Route::post('/submissions', [SubmissionController::class, 'store']);
 
+// 🏢 Organizations
 Route::post('/organizations', [OrganizationController::class, 'store']);
 Route::post('/organization/submit', [OrganizationSubmissionController::class, 'store']);
 Route::post('/organization/register', [RegisterController::class, 'register']);
