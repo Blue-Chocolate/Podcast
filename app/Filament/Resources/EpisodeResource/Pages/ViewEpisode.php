@@ -100,7 +100,7 @@ class ViewEpisode extends ViewRecord
                             ->schema([
                                 Infolists\Components\ImageEntry::make('cover_image')
                                     ->label('Cover Image')
-                                    ->disk('episodes')
+                                    ->disk('public')
                                     ->columnSpan(3)
                                     ->visible(fn ($record) => !empty($record->cover_image)),
                                 Infolists\Components\TextEntry::make('duration_seconds')
