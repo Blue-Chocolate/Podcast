@@ -7,7 +7,6 @@ use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -30,12 +29,6 @@ class UserResource extends Resource
     public static function getPluralModelLabel(): string
     {
         return 'المستخدمين';
-    }
-
-    // فقط المدير يمكنه الوصول
-    public static function canViewAny(): bool
-    {
-        return auth()->user()?->hasRole('admin') ?? false;
     }
 
     // Form للإنشاء والتعديل
@@ -113,13 +106,8 @@ class UserResource extends Resource
     {
         parent::boot();
 
-        User::saved(function ($user) {
-            Cache::forget('users.all');
-        });
-
-        User::deleted(function ($user) {
-            Cache::forget('users.all');
-        });
+        User::saved(fn() => Cache::forget('users.all'));
+        User::deleted(fn() => Cache::forget('users.all'));
     }
 
     // صفحات Filament
