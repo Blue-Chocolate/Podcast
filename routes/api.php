@@ -27,13 +27,13 @@ use App\Http\Controllers\Api\OrganizationController\RegisterController;
 // ======================================================
 // 📦 API v1 Routes
 // ======================================================
-Route::prefix('v1')->group(function () {
+Route::prefix('api/v1')->group(function () {
 
     // ==================================================
     // 🔓 PUBLIC ROUTES
     // ==================================================
     Route::get('/releases', [ReleaseController::class, 'index']);
-    Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show'])->name('podcast.rss');
+    Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show']); // internal API feed
     Route::get('/podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 
     // ==================================================
@@ -141,10 +141,10 @@ Route::prefix('v1')->group(function () {
         // 🎵 Playlists
         Route::get('playlists', [PlaylistController::class, 'index']);
         Route::get('playlists/{id}', [PlaylistController::class, 'show']);
+        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
         Route::post('playlists', [PlaylistController::class, 'store']);
         Route::put('playlists/{id}', [PlaylistController::class, 'update']);
         Route::delete('playlists/{id}', [PlaylistController::class, 'destroy']);
-        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
     });
 });
 
@@ -165,3 +165,10 @@ Route::post('/submissions', [SubmissionController::class, 'store']);
 Route::post('/organizations', [OrganizationController::class, 'store']);
 Route::post('/organization/submit', [OrganizationSubmissionController::class, 'store']);
 Route::post('/organization/register', [RegisterController::class, 'register']);
+
+// ======================================================
+// 🌟 APPLE PODCASTS / STATIC RSS FEED ROUTES
+// ======================================================
+
+// Top-level RSS feed (public, cacheable) for Apple Podcasts
+Route::get('/rss/podcast/{slug}', [PodcastRssController::class, 'show']);
