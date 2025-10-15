@@ -90,17 +90,21 @@ class EpisodeResource extends Resource
             Forms\Components\FileUpload::make('cover_image')
                 ->label('صورة الغلاف')
                 ->image()
-                ->disk('episodes')
-                ->directory('covers')
+                ->disk('public')
+                ->directory('episodes/covers')
                 ->visibility('public')
-                ->maxSize(10240),
+                ->maxSize(10240)
+                ->nullable()
+                ->getUploadedFileNameForStorageUsing(
+                    fn ($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                ),
 
             // Video upload
             Forms\Components\FileUpload::make('video_url')
                 ->label('رفع الفيديو')
                 ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                ->disk('episodes')
-                ->directory('videos')
+                ->disk('public')
+                ->directory('episodes/videos')
                 ->visibility('public')
                 ->maxSize(512000)
                 ->nullable()
@@ -112,8 +116,8 @@ class EpisodeResource extends Resource
             Forms\Components\FileUpload::make('audio_url')
                 ->label('رفع الصوت')
                 ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
-                ->disk('episodes')
-                ->directory('audios')
+                ->disk('public')
+                ->directory('episodes/audios')
                 ->visibility('public')
                 ->maxSize(51200)
                 ->nullable()
@@ -127,17 +131,40 @@ class EpisodeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->label('العنوان')->searchable(),
-                Tables\Columns\TextColumn::make('slug')->label('المعرف')->searchable(),
-                Tables\Columns\TextColumn::make('status')->label('الحالة'),
-                Tables\Columns\TextColumn::make('published_at')->label('تاريخ النشر')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('title')
+                    ->label('العنوان')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('slug')
+                    ->label('المعرف')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('الحالة')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'published' => 'success',
+                        'draft' => 'warning',
+                        'archived' => 'danger',
+                    }),
+
+                Tables\Columns\TextColumn::make('published_at')
+                    ->label('تاريخ النشر')
+                    ->dateTime()
+                    ->sortable(),
+
+                Tables\Columns\ImageColumn::make('cover_image')
+                    ->label('الغلاف')
+                    ->disk('public')
+                    ->size(50),
 
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('معاينة الفيديو')
-                    ->formatStateUsing(fn ($state, $record) => $state
+                    ->formatStateUsing(fn ($state) => $state
                         ? new HtmlString("
                             <video width='200' controls preload='metadata'>
-                                <source src='" . asset('storage/episodes/' . $record->getRawOriginal('video_url')) . "' type='video/mp4'>
+                                <source src='" . Storage::disk('public')->url($state) . "' type='video/mp4'>
                                 Your browser does not support the video tag.
                             </video>
                         ")
@@ -149,14 +176,23 @@ class EpisodeResource extends Resource
                     ->label('معاينة الصوت')
                     ->formatStateUsing(fn ($state) => $state
                         ? new HtmlString("
-                            <audio controls preload='metadata'>
-                                <source src='" . asset('storage/episodes/' . $state) . "' type='audio/mpeg'>
+                            <audio controls preload='metadata' style='width: 200px;'>
+                                <source src='" . Storage::disk('public')->url($state) . "' type='audio/mpeg'>
                                 Your browser does not support the audio tag.
                             </audio>
                         ")
                         : '-'
                     )
                     ->html(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        'draft' => 'Draft',
+                        'published' => 'Published',
+                        'archived' => 'Archived',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->label('عرض'),

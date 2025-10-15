@@ -2,14 +2,15 @@
 
 return [
     'temporary_file_upload' => [
-        'disk' => 'local', // Changed from livewire-tmp
+        'disk' => 'livewire-tmp',
         'rules' => null,
-        'directory' => 'livewire-tmp',
+        'directory' => null,
         'middleware' => null,
         'preview_mimes' => [
-            'png', 'gif', 'bmp', 'svg', 'wav', 'mp3', 'mp4',
-            'mov', 'avi', 'wmv', 'pdf', 'jpg', 'jpeg', 'webm', 'ogg', 'm4a', 'wav',
+            'png', 'gif', 'bmp', 'svg', 'wav', 'mp3', 
+            'mp4', 'mov', 'avi', 'wmv', 'webm', 'ogg',
+            'jpg', 'jpeg', 'pdf', 'm4a',
         ],
-        'max_upload_time' => 5,
+        'max_upload_time' => 30, 
     ],
 ];
