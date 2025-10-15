@@ -91,4 +91,12 @@ class User extends Authenticatable
             self::clearCache($user->id);
         });
     }
+    public function organizations()
+{
+    return $this->hasMany(Organization::class);
+}
+public function canAccessFilament(): bool
+{
+    return $this->role === 'admin';
+}
 }

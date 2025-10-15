@@ -34,7 +34,7 @@ class RegisterController extends Controller
         DB::beginTransaction();
 
         try {
-            // Create or find organization
+            // Create or find organization linked to current user
             $organization = Organization::firstOrCreate(
                 ['email' => $validated['email']],
                 [
@@ -43,6 +43,7 @@ class RegisterController extends Controller
                     'established_at' => $validated['established_at'] ?? null,
                     'phone' => $validated['phone'] ?? null,
                     'address' => $validated['address'] ?? null,
+                    'user_id' => auth()->id(), // <-- ربط باليوزر الحالي
                 ]
             );
 
@@ -53,14 +54,12 @@ class RegisterController extends Controller
             if ($request->hasFile('strategic_plan')) {
                 $strategicPlanPath = $request->file('strategic_plan')
                     ->store("uploads/organizations/{$organization->id}", 'public');
-                // Update organization with file path
                 $organization->update(['strategy_plan_path' => $strategicPlanPath]);
             }
 
             if ($request->hasFile('financial_report')) {
                 $financialReportPath = $request->file('financial_report')
                     ->store("uploads/organizations/{$organization->id}", 'public');
-                // Update organization with file path
                 $organization->update(['financial_report_path' => $financialReportPath]);
             }
 

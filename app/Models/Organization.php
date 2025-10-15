@@ -21,6 +21,7 @@ protected $fillable = [
     'strategy_plan_path',
     'financial_report_path',
     'structure_chart_path',
+    'user_id',
 ];
 
 
@@ -36,4 +37,9 @@ public function submission()
 {
     return $this->hasOne(Submission::class)->latest();
 }
+public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
 }

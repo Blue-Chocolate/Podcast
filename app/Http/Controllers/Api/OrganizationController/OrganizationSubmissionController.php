@@ -28,25 +28,34 @@ class OrganizationSubmissionController extends Controller
             'answers' => 'required|array', // الأسئلة الأربعة
         ]);
 
+        // ✅ العثور على المنظمة حسب الإيميل
+        $organization = Organization::where('email', $request->email)->first();
+
+        if (!$organization) {
+            return response()->json(['message' => 'Organization not found'], 404);
+        }
+
+        // ✅ التحقق من ملكية المستخدم
+        if ($organization->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         // ✅ حفظ الملفات
         $strategy = $request->file('strategy_plan')?->store('submissions', 'public');
         $financial = $request->file('financial_report')?->store('submissions', 'public');
         $structure = $request->file('structure_chart')?->store('submissions', 'public');
 
-        // ✅ إنشاء المنظمة أو تحديثها حسب الإيميل
-        $organization = Organization::updateOrCreate(
-            ['email' => $request->email],
-            [
-                'name' => $request->name,
-                'sector' => $request->sector,
-                'established_at' => $request->established_at,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'strategy_plan_path' => $strategy,
-                'financial_report_path' => $financial,
-                'structure_chart_path' => $structure,
-            ]
-        );
+        // ✅ تحديث بيانات المنظمة مع الملفات الجديدة (إذا وجدت)
+        $organization->update([
+            'name' => $request->name,
+            'sector' => $request->sector,
+            'established_at' => $request->established_at,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'strategy_plan_path' => $strategy ?? $organization->strategy_plan_path,
+            'financial_report_path' => $financial ?? $organization->financial_report_path,
+            'structure_chart_path' => $structure ?? $organization->structure_chart_path,
+        ]);
 
         // ✅ حساب النتيجة بناءً على الإجابات
         $totalScore = collect($request->answers)->avg();

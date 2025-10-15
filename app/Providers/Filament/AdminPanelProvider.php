@@ -54,12 +54,14 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\RoleMiddleware::class . ':admin', // Add RoleMiddleware here
             ]);
     }
+
     public function boot(): void
-{
-    Filament::serving(function () {
-        app()->setLocale('ar'); // اللغة العربية
-    });
-}
+    {
+        Filament::serving(function () {
+            app()->setLocale('ar'); // Set locale to Arabic
+        });
+    }
 }
