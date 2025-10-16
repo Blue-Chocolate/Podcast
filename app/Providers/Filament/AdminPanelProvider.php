@@ -55,8 +55,8 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 
             ])
-            ->navigationGroups([])
-            ->databaseNotifications();
+            ->navigationGroups([]);
+            // ->databaseNotifications();
     }
 
     public function boot(): void
