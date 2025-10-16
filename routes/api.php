@@ -32,11 +32,13 @@ Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('rss/podcast/{slug}', [PodcastRssController::class, 'show']);
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 Route::post('submissions', [SubmissionController::class, 'store']);
-
+Route::get('episodes', [EpisodeController::class, 'index']);
+Route::get('episodes/{id}', [EpisodeController::class, 'show']);
 // 🎙️ Public podcast routes
 Route::get('podcasts', [PodcastController::class, 'index']);
 Route::get('podcasts/{id}', [PodcastController::class, 'show']);
-
+Route::get('blogs', [BlogController::class, 'index']);
+Route::get('blogs/{id}', [BlogController::class, 'show']);
 // ==================================================
 // 🔐 AUTH ROUTES
 // ==================================================

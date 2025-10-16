@@ -11,14 +11,16 @@ class EpisodeRepository
 {
     public function getAll()
     {
-        return Episode::with(['podcast', 'season', 'files', 'hosts', 'guests', 'categories', 'tags', 'sponsors'])
+        // ✅ Remove all undefined relationships
+        return Episode::with(['podcast', 'season'])
             ->latest()
             ->paginate(15);
     }
 
     public function find($id)
     {
-        $episode = Episode::with(['podcast', 'season', 'files', 'hosts', 'guests', 'categories', 'tags', 'sponsors'])
+        // ✅ Only load existing relations
+        $episode = Episode::with(['podcast', 'season'])
             ->find($id);
 
         if (!$episode) {
@@ -32,16 +34,12 @@ class EpisodeRepository
     {
         try {
             return DB::transaction(function () use ($data) {
-                $categories = $data['categories'] ?? [];
+                // Remove categories handling since relationship not defined
                 unset($data['categories']);
 
                 $episode = Episode::create($data);
 
-                if (!empty($categories)) {
-                    $episode->categories()->sync($categories);
-                }
-
-                return $episode->load('categories');
+                return $episode->load(['podcast', 'season']);
             });
         } catch (Exception $e) {
             throw new Exception('Failed to create episode: ' . $e->getMessage());
@@ -52,16 +50,11 @@ class EpisodeRepository
     {
         try {
             return DB::transaction(function () use ($episode, $data) {
-                $categories = $data['categories'] ?? null;
                 unset($data['categories']);
 
                 $episode->update($data);
 
-                if (is_array($categories)) {
-                    $episode->categories()->sync($categories);
-                }
-
-                return $episode->load('categories');
+                return $episode->load(['podcast', 'season']);
             });
         } catch (Exception $e) {
             throw new Exception('Failed to update episode: ' . $e->getMessage());
