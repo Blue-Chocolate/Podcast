@@ -17,27 +17,20 @@ class RoleMiddleware
      * @return mixed
      */
     public function handle(Request $request, Closure $next, $role)
-    {
-        // If user is not authenticated, let Authenticate middleware handle it
-        if (!Auth::check()) {
-            return $next($request);
-        }
+{
+    // Use the same guard that sanctum uses
+    $user = $request->user();
 
-        $user = Auth::user();
-
-        // Check if user has the required role
-        if ($user->role !== $role) {
-            // For web routes, redirect or abort
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
-            
-            // Log out and redirect to login
-            Auth::logout();
-            return redirect()->route('filament.admin.auth.login')
-                ->with('error', 'You do not have permission to access this area.');
-        }
-
-        return $next($request);
+    if (!$user) {
+        // If no user found, return 401 JSON
+        return response()->json(['message' => 'Unauthenticated'], 401);
     }
+
+    // Check the user's role
+    if ($user->role !== $role) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    return $next($request);
+}
 }
