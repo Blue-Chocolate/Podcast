@@ -54,14 +54,28 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                \App\Http\Middleware\RoleMiddleware::class . ':admin', // Add RoleMiddleware here
-            ]);
+                \App\Http\Middleware\RoleMiddleware::class . ':admin',
+            ])
+            // Add authentication guard and check for admin role
+            ->authGuard('web')
+            ->navigationGroups([])
+            ->databaseNotifications();
     }
 
     public function boot(): void
     {
         Filament::serving(function () {
             app()->setLocale('ar'); // Set locale to Arabic
+            
+            // Only check role if user is authenticated and not on login/logout routes
+            if (auth()->check() && !request()->routeIs('filament.*.auth.*')) {
+                $user = auth()->user();
+                if ($user->role !== 'admin') {
+                    auth()->logout();
+                    session()->flash('error', 'You do not have permission to access this area.');
+                    abort(403);
+                }
+            }
         });
     }
 }
