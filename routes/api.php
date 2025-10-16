@@ -39,6 +39,12 @@ Route::get('podcasts', [PodcastController::class, 'index']);
 Route::get('podcasts/{id}', [PodcastController::class, 'show']);
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
+Route::get('blogs', [BlogController::class, 'index']);
+        Route::get('blogs/{id}', [BlogController::class, 'show']);
+                Route::get('playlists', [PlaylistController::class, 'index']);
+        Route::get('playlists/{id}', [PlaylistController::class, 'show']);
+          Route::get('posts', [PostController::class, 'index']);
+        Route::get('posts/{id}', [PostController::class, 'show']);
 // ==================================================
 // 🔐 AUTH ROUTES
 // ==================================================
@@ -117,22 +123,19 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
 
         // Blogs
-        Route::get('blogs', [BlogController::class, 'index']);
-        Route::get('blogs/{id}', [BlogController::class, 'show']);
+        
         Route::post('blogs', [BlogController::class, 'store']);
         Route::put('blogs/{id}', [BlogController::class, 'update']);
         Route::delete('blogs/{id}', [BlogController::class, 'destroy']);
 
         // Posts
-        Route::get('posts', [PostController::class, 'index']);
-        Route::get('posts/{id}', [PostController::class, 'show']);
+      
         Route::post('posts', [PostController::class, 'store']);
         Route::put('posts/{id}', [PostController::class, 'update']);
         Route::delete('posts/{id}', [PostController::class, 'destroy']);
 
         // Playlists
-        Route::get('playlists', [PlaylistController::class, 'index']);
-        Route::get('playlists/{id}', [PlaylistController::class, 'show']);
+
         Route::post('playlists', [PlaylistController::class, 'store']);
         Route::put('playlists/{id}', [PlaylistController::class, 'update']);
         Route::delete('playlists/{id}', [PlaylistController::class, 'destroy']);
