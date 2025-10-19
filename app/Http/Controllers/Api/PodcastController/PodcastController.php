@@ -13,8 +13,10 @@ class PodcastController extends Controller
 {
     public function index(ShowPodcastAction $showAction)
     {
+        $podcasts = \App\Models\Podcast::all();
+    return response()->json($podcasts);
         // if you want all podcasts, you can add a separate ListPodcastsAction
-        return response()->json($showAction->execute(0)); // 0 or separate list action
+        // return response()->json($showAction->execute(0)); // 0 or separate list action
     }
 
     public function show(int $id, ShowPodcastAction $showAction)

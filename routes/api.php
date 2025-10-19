@@ -82,8 +82,8 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::delete('seasons/{id}', [SeasonController::class, 'destroy']);
 
         // Episodes
-        Route::get('episodes', [EpisodeController::class, 'index']);
-        Route::get('episodes/{id}', [EpisodeController::class, 'show']);
+        // Route::get('episodes', [EpisodeController::class, 'index']);
+        // Route::get('episodes/{id}', [EpisodeController::class, 'show']);
         Route::post('episodes', [EpisodeController::class, 'store']);
         Route::put('episodes/{id}', [EpisodeController::class, 'update']);
         Route::delete('episodes/{id}', [EpisodeController::class, 'destroy']);
