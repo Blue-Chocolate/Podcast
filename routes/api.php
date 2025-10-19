@@ -155,11 +155,4 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':user'])
         Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
     });
 
-// ==================================================
-// 🏢 ORGANIZATIONS (Authenticated)
-// ==================================================
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('organizations', [OrganizationController::class, 'store']);
-    Route::post('organization/register', [RegisterController::class, 'register']);
-    Route::post('organization/submit', [OrganizationSubmissionController::class, 'store']);
-});
+

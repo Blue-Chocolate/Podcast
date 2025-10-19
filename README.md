@@ -1,61 +1,85 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+🎧 Podcast API Documentation
+Public Routes (No Auth Required)
+Method	Endpoint	Description
+GET	/releases	Get list of releases
+GET	/rss/podcast/{slug}	Get RSS feed for a podcast
+GET	/podcasts/{slug}/feed	Get RSS feed of a podcast
+GET	/podcasts	List all podcasts
+GET	/podcasts/{id}	Get details of a specific podcast
+GET	/episodes	List all episodes
+GET	/episodes/{id}	Get details of a specific episode
+GET	/blogs	List all blogs
+GET	/blogs/{id}	Get details of a specific blog
+POST	/submissions	Submit a new submission
+Authentication
+Method	Endpoint	Description
+POST	/login	Login user and get Sanctum token. Returns token and role.
+POST	/logout	Logout user (Auth required)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Login Request Example:
 
-## About Laravel
+{
+  "email": "user@example.com",
+  "password": "secret"
+}
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Login Response Example:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+{
+  "token": "sanctum-token-here",
+  "role": "user"
+}
 
-## Learning Laravel
+User Routes (Auth + Role:user)
+Method	Endpoint	Description
+GET	/user/playlists	List all playlists for user
+GET	/user/playlists/{id}	Get specific playlist details
+GET	/user/releases/{id}/download	Download a release
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Note: User cannot create/update/delete posts, blogs, podcasts, episodes, etc. Admin manages all that via Filament.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Admin Routes (Removed from API docs)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Post, Blog, Podcast, Episode, Category, Playlist management is handled via Filament admin panel.
 
-## Laravel Sponsors
+No need to expose POST/PUT/DELETE routes in API docs.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+✅ Summary of Clean API:
 
-### Premium Partners
+Public: releases, podcasts, episodes, blogs, submissions, RSS feeds
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Authenticated User: playlists, download releases
 
-## Contributing
+Admin: Managed entirely in Filament, no API CRUD needed
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
+1️⃣ Public Endpoints (No Auth)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Get all releases:
+GET http://www.haqqeq.com/api/releases
 
-## Security Vulnerabilities
+Get RSS feed for a podcast by slug:
+GET http://www.haqqeq.com/api/rss/podcast/{slug}
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Get podcast RSS feed by slug:
+GET http://www.haqqeq.com/api/podcasts/{slug}/feed
 
-## License
+List all podcasts:
+GET http://www.haqqeq.com/api/podcasts
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Get podcast details by ID:
+GET http://www.haqqeq.com/api/podcasts/{id}
+
+List all episodes:
+GET http://www.haqqeq.com/api/episodes
+
+Get episode details by ID:
+GET http://www.haqqeq.com/api/episodes/{id}
+
+List all blogs:
+GET http://www.haqqeq.com/api/blogs
+
+Get blog details by ID:
+GET http://www.haqqeq.com/api/blogs/{id}
+
