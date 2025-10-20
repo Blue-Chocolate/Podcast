@@ -38,9 +38,9 @@ class PodcastResource extends Resource
                         if (!$record) {
                             return new HtmlString('<span style="color: #999;">احفظ البودكاست أولاً لتوليد رابط RSS</span>');
                         }
-                        
+
                         $rssUrl = route('podcast.rss', $record->slug);
-                        
+
                         return new HtmlString('
                             <div style="background: #f0f9ff; padding: 12px; border-radius: 6px; border: 2px solid #0ea5e9;">
                                 <a href="'.$rssUrl.'" target="_blank" style="color: #0369a1; font-weight: 600; text-decoration: none;">
@@ -62,7 +62,7 @@ class PodcastResource extends Resource
                             ->maxLength(150)
                             ->helperText('سيُستخدم في رابط RSS. مثال: my-podcast')
                             ->unique(ignoreRecord: true)
-                            ->alphaDash(),
+                            ->regex('/^[\p{Arabic}\p{Latin}0-9_-]+$/u'),
 
                         Forms\Components\TextInput::make('title')
                             ->label('العنوان')
@@ -112,65 +112,64 @@ class PodcastResource extends Resource
     }
 
     public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            Tables\Columns\ImageColumn::make('cover_image')
-                ->label('الغلاف')
-                ->circular(),
+    {
+        return $table
+            ->columns([
+                Tables\Columns\ImageColumn::make('cover_image')
+                    ->label('الغلاف')
+                    ->circular(),
 
-            Tables\Columns\TextColumn::make('title')
-                ->label('العنوان')
-                ->searchable() // البحث عن طريق العنوان
-                ->weight('bold'),
+                Tables\Columns\TextColumn::make('title')
+                    ->label('العنوان')
+                    ->searchable()
+                    ->weight('bold'),
 
-            Tables\Columns\TextColumn::make('slug')
-                ->label('المعرف')
-                ->searchable() // البحث عن طريق slug
-                ->copyable()
-                ->badge()
-                ->color('info'),
+                Tables\Columns\TextColumn::make('slug')
+                    ->label('المعرف')
+                    ->searchable()
+                    ->copyable()
+                    ->badge()
+                    ->color('info'),
 
-            Tables\Columns\TextColumn::make('episodes_count')
-                ->label('عدد الحلقات')
-                ->counts('episodes')
-                ->badge()
-                ->color('success'),
+                Tables\Columns\TextColumn::make('episodes_count')
+                    ->label('عدد الحلقات')
+                    ->counts('episodes')
+                    ->badge()
+                    ->color('success'),
 
-            Tables\Columns\TextColumn::make('rss_feed')
-                ->label('رابط RSS')
-                ->formatStateUsing(fn ($record) => route('podcast.rss', $record->slug))
-                ->copyable()
-                ->limit(40)
-                ->tooltip(fn ($record) => route('podcast.rss', $record->slug)),
+                Tables\Columns\TextColumn::make('rss_feed')
+                    ->label('رابط RSS')
+                    ->formatStateUsing(fn ($record) => route('podcast.rss', $record->slug))
+                    ->copyable()
+                    ->limit(40)
+                    ->tooltip(fn ($record) => route('podcast.rss', $record->slug)),
 
-            Tables\Columns\TextColumn::make('language')
-                ->label('اللغة')
-                ->badge(),
+                Tables\Columns\TextColumn::make('language')
+                    ->label('اللغة')
+                    ->badge(),
 
-            Tables\Columns\TextColumn::make('created_at')
-                ->label('تاريخ الإنشاء')
-                ->dateTime()
-                ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
-        ])
-        ->searchable() // search شامل على العمودين
-        ->actions([
-            Tables\Actions\Action::make('view_rss')
-                ->label('عرض RSS')
-                ->icon('heroicon-o-rss')
-                ->url(fn ($record) => route('podcast.rss', $record->slug))
-                ->openUrlInNewTab()
-                ->color('info'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('view_rss')
+                    ->label('عرض RSS')
+                    ->icon('heroicon-o-rss')
+                    ->url(fn ($record) => route('podcast.rss', $record->slug))
+                    ->openUrlInNewTab()
+                    ->color('info'),
 
-            Tables\Actions\EditAction::make()->label('تعديل'),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-            ]),
-        ]);
-}
+                Tables\Actions\EditAction::make()->label('تعديل'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                ]),
+            ]);
+    }
 
     public static function getRelations(): array
     {

@@ -31,11 +31,12 @@ class EpisodeResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('podcast_id')
-                ->label('معرف البودكاست')
-                ->required()
-                ->numeric(),
-
+            Forms\Components\Select::make('podcast_id')
+    ->label('البودكاست')
+    ->required()
+    ->relationship('podcast', 'title') // اسم العلاقة في الـ Model و العمود اللي يتعرض
+    ->searchable() // يسمح بالبحث داخل القائمة
+    ->preload(),
             Forms\Components\TextInput::make('season_id')
                 ->label('الموسم')
                 ->numeric()
