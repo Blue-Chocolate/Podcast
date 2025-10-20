@@ -9,6 +9,9 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ReleaseResource extends Resource
 {
@@ -42,7 +45,8 @@ class ReleaseResource extends Resource
 
                 Forms\Components\FileUpload::make('file_path')
                     ->label('ملف PDF')
-                    ->directory('releases')
+                    ->disk('public')
+                    ->directory('releases/files')
                     ->acceptedFileTypes(['application/pdf'])
                     ->maxSize(10240)
                     ->required()
@@ -51,9 +55,10 @@ class ReleaseResource extends Resource
 
                 Forms\Components\FileUpload::make('images')
                     ->label('صور الغلاف')
+                    ->disk('public')
                     ->directory('releases/images')
                     ->image()
-                    ->multiple() // ← يسمح برفع أكثر من صورة
+                    ->multiple() 
                     ->maxSize(2048)
                     ->imageEditor(),
             ]);
@@ -73,8 +78,18 @@ class ReleaseResource extends Resource
                     ->limit(50)
                     ->searchable(),
 
-                Tables\Columns\ImageColumn::make('images.0') // ← يعرض أول صورة كصورة الغلاف
-                    ->label('الغلاف'),
+                Tables\Columns\ImageColumn::make('images.0') // يعرض أول صورة
+                    ->label('الغلاف')
+                    ->disk('public')
+                    ->size(50),
+
+                Tables\Columns\TextColumn::make('file_path')
+                    ->label('ملف PDF')
+                    ->formatStateUsing(fn ($state) => $state
+                        ? new HtmlString('<a href="' . Storage::disk('public')->url($state) . '" target="_blank">تحميل PDF</a>')
+                        : '-'
+                    )
+                    ->html(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
@@ -82,6 +97,7 @@ class ReleaseResource extends Resource
                     ->sortable()
                     ->toggleable(),
             ])
+            ->searchable()
             ->actions([
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),

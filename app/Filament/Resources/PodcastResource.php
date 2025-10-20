@@ -112,64 +112,65 @@ class PodcastResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\ImageColumn::make('cover_image')
-                    ->label('الغلاف')
-                    ->circular(),
+{
+    return $table
+        ->columns([
+            Tables\Columns\ImageColumn::make('cover_image')
+                ->label('الغلاف')
+                ->circular(),
 
-                Tables\Columns\TextColumn::make('title')
-                    ->label('العنوان')
-                    ->searchable()
-                    ->weight('bold'),
+            Tables\Columns\TextColumn::make('title')
+                ->label('العنوان')
+                ->searchable() // البحث عن طريق العنوان
+                ->weight('bold'),
 
-                Tables\Columns\TextColumn::make('slug')
-                    ->label('المعرف')
-                    ->searchable()
-                    ->copyable()
-                    ->badge()
-                    ->color('info'),
+            Tables\Columns\TextColumn::make('slug')
+                ->label('المعرف')
+                ->searchable() // البحث عن طريق slug
+                ->copyable()
+                ->badge()
+                ->color('info'),
 
-                Tables\Columns\TextColumn::make('episodes_count')
-                    ->label('عدد الحلقات')
-                    ->counts('episodes')
-                    ->badge()
-                    ->color('success'),
+            Tables\Columns\TextColumn::make('episodes_count')
+                ->label('عدد الحلقات')
+                ->counts('episodes')
+                ->badge()
+                ->color('success'),
 
-                Tables\Columns\TextColumn::make('rss_feed')
-                    ->label('رابط RSS')
-                    ->formatStateUsing(fn ($record) => route('podcast.rss', $record->slug))
-                    ->copyable()
-                    ->limit(40)
-                    ->tooltip(fn ($record) => route('podcast.rss', $record->slug)),
+            Tables\Columns\TextColumn::make('rss_feed')
+                ->label('رابط RSS')
+                ->formatStateUsing(fn ($record) => route('podcast.rss', $record->slug))
+                ->copyable()
+                ->limit(40)
+                ->tooltip(fn ($record) => route('podcast.rss', $record->slug)),
 
-                Tables\Columns\TextColumn::make('language')
-                    ->label('اللغة')
-                    ->badge(),
+            Tables\Columns\TextColumn::make('language')
+                ->label('اللغة')
+                ->badge(),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('تاريخ الإنشاء')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->actions([
-                Tables\Actions\Action::make('view_rss')
-                    ->label('عرض RSS')
-                    ->icon('heroicon-o-rss')
-                    ->url(fn ($record) => route('podcast.rss', $record->slug))
-                    ->openUrlInNewTab()
-                    ->color('info'),
-                    
-                Tables\Actions\EditAction::make()->label('تعديل'),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-                ]),
-            ]);
-    }
+            Tables\Columns\TextColumn::make('created_at')
+                ->label('تاريخ الإنشاء')
+                ->dateTime()
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+        ])
+        ->searchable() // search شامل على العمودين
+        ->actions([
+            Tables\Actions\Action::make('view_rss')
+                ->label('عرض RSS')
+                ->icon('heroicon-o-rss')
+                ->url(fn ($record) => route('podcast.rss', $record->slug))
+                ->openUrlInNewTab()
+                ->color('info'),
+
+            Tables\Actions\EditAction::make()->label('تعديل'),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+            ]),
+        ]);
+}
 
     public static function getRelations(): array
     {
