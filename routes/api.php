@@ -28,6 +28,7 @@ use App\Http\Middleware\RoleMiddleware;
 // ==================================================
 // 🔓 PUBLIC ROUTES
 // ==================================================
+
 Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('rss/podcast/{slug}', [PodcastRssController::class, 'show']);
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
@@ -95,7 +96,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::put('episode-files/{id}', [EpisodeFileController::class, 'update']);
         Route::delete('episode-files/{id}', [EpisodeFileController::class, 'destroy']);
 
-        // Transcripts
+        // Transcriptswhe
         Route::get('transcripts', [TranscriptController::class, 'index']);
         Route::get('transcripts/{id}', [TranscriptController::class, 'show']);
         Route::post('transcripts', [TranscriptController::class, 'store']);
@@ -117,8 +118,8 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
 
         // Blogs
-        Route::get('blogs', [BlogController::class, 'index']);
-        Route::get('blogs/{id}', [BlogController::class, 'show']);
+        // Route::get('blogs', [BlogController::class, 'index']);
+        // Route::get('blogs/{id}', [BlogController::class, 'show']);
         Route::post('blogs', [BlogController::class, 'store']);
         Route::put('blogs/{id}', [BlogController::class, 'update']);
         Route::delete('blogs/{id}', [BlogController::class, 'destroy']);

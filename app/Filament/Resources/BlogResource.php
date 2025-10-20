@@ -4,11 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class BlogResource extends Resource
 {
@@ -30,14 +32,57 @@ class BlogResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')->label('معرف المستخدم')->required()->numeric(),
-                Forms\Components\TextInput::make('title')->label('العنوان')->required()->maxLength(255),
-                Forms\Components\Textarea::make('content')->label('المحتوى')->required()->columnSpanFull(),
-                Forms\Components\TextInput::make('category')->label('التصنيف')->maxLength(100)->default(null),
-                Forms\Components\TextInput::make('status')->label('الحالة')->required(),
-                Forms\Components\DateTimePicker::make('publish_date')->label('تاريخ النشر'),
-                Forms\Components\TextInput::make('views')->label('عدد المشاهدات')->required()->numeric()->default(0),
-                Forms\Components\FileUpload::make('image')->label('الصورة')->image(),
+                // اختيار المستخدم بالاسم مع إمكانية البحث
+                Forms\Components\Select::make('user_id')
+                    ->label('المستخدم')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->required(),
+
+                Forms\Components\TextInput::make('title')
+                    ->label('العنوان')
+                    ->required()
+                    ->maxLength(255),
+
+                // حقل الوصف الجديد
+                Forms\Components\Textarea::make('description')
+                    ->label('الوصف')
+                    ->maxLength(500)
+                    ->columnSpanFull(),
+
+                // المحتوى كـ RichEditor
+                Forms\Components\RichEditor::make('content')
+                    ->label('المحتوى')
+                    ->required()
+                    ->columnSpanFull(),
+
+                Forms\Components\TextInput::make('category')
+                    ->label('التصنيف')
+                    ->maxLength(100)
+                    ->default(null),
+
+                // الحالة باختيارات محددة
+                Forms\Components\Select::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        'published' => 'منشور',
+                        'drafted' => 'مسودة',
+                        'rejected' => 'مرفوض',
+                    ])
+                    ->required(),
+
+                Forms\Components\DateTimePicker::make('publish_date')
+                    ->label('تاريخ النشر'),
+
+                Forms\Components\TextInput::make('views')
+                    ->label('عدد المشاهدات')
+                    ->numeric()
+                    ->default(0)
+                    ->required(),
+
+                Forms\Components\FileUpload::make('image')
+                    ->label('الصورة')
+                    ->image(),
             ]);
     }
 
@@ -45,15 +90,52 @@ class BlogResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')->label('معرف المستخدم')->numeric()->sortable(),
-                Tables\Columns\TextColumn::make('title')->label('العنوان')->searchable(),
-                Tables\Columns\TextColumn::make('category')->label('التصنيف')->searchable(),
-                Tables\Columns\TextColumn::make('status')->label('الحالة'),
-                Tables\Columns\TextColumn::make('publish_date')->label('تاريخ النشر')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('views')->label('عدد المشاهدات')->numeric()->sortable(),
-                Tables\Columns\ImageColumn::make('image')->label('الصورة'),
-                Tables\Columns\TextColumn::make('created_at')->label('تاريخ الإنشاء')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')->label('تاريخ التحديث')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('اسم المستخدم')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('title')
+                    ->label('العنوان')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('category')
+                    ->label('التصنيف')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('الحالة')
+                    ->badge()
+                    ->colors([
+                        'success' => 'published',
+                        'warning' => 'drafted',
+                        'danger' => 'rejected',
+                    ]),
+
+                Tables\Columns\TextColumn::make('publish_date')
+                    ->label('تاريخ النشر')
+                    ->dateTime()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('views')
+                    ->label('عدد المشاهدات')
+                    ->numeric()
+                    ->sortable(),
+
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('الصورة'),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('تعديل'),

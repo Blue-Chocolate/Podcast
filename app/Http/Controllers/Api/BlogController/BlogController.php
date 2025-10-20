@@ -12,6 +12,7 @@ use App\Actions\Blogs\{
     ShowBlogAction,
     ListBlogsAction
 };
+USE App\Models\Blog;
 
 class BlogController extends Controller
 {
@@ -25,6 +26,9 @@ class BlogController extends Controller
     {
         $blog = $action->execute($id);
         return response()->json($blog);
+         $blog = Blog::findOrFail($id);
+    $blog->increment('views'); // كل زيارة تزود 1
+    return view('blog.show', compact('blog'));
     }
 
     public function store(Request $request, CreateBlogAction $action)
@@ -83,4 +87,5 @@ class BlogController extends Controller
 
         return response()->json(['message' => 'Blog deleted successfully']);
     }
+
 }
