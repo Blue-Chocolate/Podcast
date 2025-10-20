@@ -12,6 +12,10 @@ class Release extends Model
         'file_path',
         'excel_path',
         'powerbi_path',
-        'image',
+        'images',
+    ];
+
+    protected $casts = [
+        'images' => 'array', // ← يخلي الصور تتحول Array تلقائيًا
     ];
 }

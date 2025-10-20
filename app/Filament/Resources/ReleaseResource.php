@@ -49,10 +49,11 @@ class ReleaseResource extends Resource
                     ->downloadable()
                     ->openable(),
 
-                Forms\Components\FileUpload::make('image')
-                    ->label('صورة الغلاف')
+                Forms\Components\FileUpload::make('images')
+                    ->label('صور الغلاف')
                     ->directory('releases/images')
                     ->image()
+                    ->multiple() // ← يسمح برفع أكثر من صورة
                     ->maxSize(2048)
                     ->imageEditor(),
             ]);
@@ -72,7 +73,7 @@ class ReleaseResource extends Resource
                     ->limit(50)
                     ->searchable(),
 
-                Tables\Columns\ImageColumn::make('image')
+                Tables\Columns\ImageColumn::make('images.0') // ← يعرض أول صورة كصورة الغلاف
                     ->label('الغلاف'),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -90,13 +91,6 @@ class ReleaseResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()->label('حذف'),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
