@@ -17,6 +17,7 @@ class Episode extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'explicit' => 'boolean',
+         'audio_url' => 'string',
     ];
 
     // Add these to prevent accessor conflicts with Filament
@@ -92,4 +93,10 @@ class Episode extends Model
     {
         return $this->belongsTo(Season::class);
     }
+    public function getAudioFullUrlAttribute()
+{
+    return $this->audio_url
+        ? url('api/episodes/audios/' . basename($this->audio_url))
+        : null;
+}
 }

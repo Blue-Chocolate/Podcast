@@ -28,7 +28,6 @@ use App\Http\Middleware\RoleMiddleware;
 // ==================================================
 // 🔓 PUBLIC ROUTES
 // ==================================================
-
 Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('rss/podcast/{slug}', [PodcastRssController::class, 'show']);
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
@@ -40,6 +39,20 @@ Route::get('podcasts', [PodcastController::class, 'index']);
 Route::get('podcasts/{id}', [PodcastController::class, 'show']);
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
+
+// 🎵 Audio files route - لازم يبقى في الآخر
+Route::get('episodes/audios/{filename}', function ($filename) {
+    $path = public_path('storage/episodes/audios/' . $filename);
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    return response()->file($path, [
+        'Content-Type' => 'audio/mpeg',
+        'Accept-Ranges' => 'bytes',
+    ]);
+})->where('filename', '.*');
 // ==================================================
 // 🔐 AUTH ROUTES
 // ==================================================
