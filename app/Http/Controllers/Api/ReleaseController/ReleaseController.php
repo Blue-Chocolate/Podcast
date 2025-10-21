@@ -15,9 +15,16 @@ class ReleaseController extends Controller
      */
     public function index()
     {
-        $releases = Release::select('id', 'title', 'description', 'image', 'created_at')
+        $releases = Release::select('id', 'title', 'description', 'images', 'created_at')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($release) {
+                // Decode images JSON and prepend full URLs
+                $release->images = $release->images ? collect(json_decode($release->images))
+                    ->map(fn($img) => asset('storage/' . $img))
+                    ->toArray() : [];
+                return $release;
+            });
 
         return response()->json($releases);
     }
@@ -33,7 +40,7 @@ class ReleaseController extends Controller
             'file' => 'nullable|file|mimes:pdf|max:20480',
             'excel' => 'nullable|file|mimes:xlsx,xls|max:20480',
             'powerbi' => 'nullable|file|mimes:pbix|max:51200',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         $pdfPath = $request->hasFile('file')
@@ -48,9 +55,13 @@ class ReleaseController extends Controller
             ? $request->file('powerbi')->store('releases', 'public')
             : null;
 
-        $imagePath = $request->hasFile('image')
-            ? $request->file('image')->store('releases/images', 'public')
-            : null;
+        // Handle multiple image uploads
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('releases/images', 'public');
+            }
+        }
 
         $release = Release::create([
             'title' => $request->title,
@@ -58,7 +69,7 @@ class ReleaseController extends Controller
             'file_path' => $pdfPath,
             'excel_path' => $excelPath,
             'powerbi_path' => $powerbiPath,
-            'image' => $imagePath,
+            'images' => $imagePaths ? json_encode($imagePaths) : null,
         ]);
 
         return response()->json([
@@ -84,7 +95,6 @@ class ReleaseController extends Controller
             return response()->json(['error' => 'Release not found.'], 404);
         }
 
-        // Determine file path
         $path = match ($type) {
             'pdf' => $release->file_path,
             'excel' => $release->excel_path,
@@ -97,7 +107,6 @@ class ReleaseController extends Controller
         }
 
         $fullPath = storage_path('app/public/' . $path);
-
         if (!file_exists($fullPath)) {
             return response()->json(['error' => 'File not found.'], 404);
         }

@@ -32,11 +32,12 @@ class EpisodeResource extends Resource
     {
         return $form->schema([
             Forms\Components\Select::make('podcast_id')
-    ->label('البودكاست')
-    ->required()
-    ->relationship('podcast', 'title') // اسم العلاقة في الـ Model و العمود اللي يتعرض
-    ->searchable() // يسمح بالبحث داخل القائمة
-    ->preload(),
+                ->label('البودكاست')
+                ->required()
+                ->relationship('podcast', 'title')
+                ->searchable()
+                ->preload(),
+
             Forms\Components\TextInput::make('season_id')
                 ->label('الموسم')
                 ->numeric()
@@ -160,30 +161,32 @@ class EpisodeResource extends Resource
                     ->disk('public')
                     ->size(50),
 
+                // Video preview
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('معاينة الفيديو')
-                    ->formatStateUsing(fn ($state) => $state
-                        ? new HtmlString("
+                    ->formatStateUsing(function ($state) {
+                        if (!$state || $state instanceof \Closure) return '-';
+                        return new HtmlString("
                             <video width='200' controls preload='metadata'>
                                 <source src='" . Storage::disk('public')->url($state) . "' type='video/mp4'>
-                                Your browser does not support the video tag.
+                                متصفحك لا يدعم تشغيل الفيديو.
                             </video>
-                        ")
-                        : '-'
-                    )
+                        ");
+                    })
                     ->html(),
 
+                // Audio preview
                 Tables\Columns\TextColumn::make('audio_url')
                     ->label('معاينة الصوت')
-                    ->formatStateUsing(fn ($state) => $state
-                        ? new HtmlString("
+                    ->formatStateUsing(function ($state) {
+                        if (!$state || $state instanceof \Closure) return '-';
+                        return new HtmlString("
                             <audio controls preload='metadata' style='width: 200px;'>
                                 <source src='" . Storage::disk('public')->url($state) . "' type='audio/mpeg'>
-                                Your browser does not support the audio tag.
+                                متصفحك لا يدعم تشغيل الصوت.
                             </audio>
-                        ")
-                        : '-'
-                    )
+                        ");
+                    })
                     ->html(),
             ])
             ->filters([
