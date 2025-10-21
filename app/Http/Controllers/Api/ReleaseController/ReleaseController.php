@@ -14,20 +14,21 @@ class ReleaseController extends Controller
      * Get all releases (public)
      */
     public function index()
-    {
-        $releases = Release::select('id', 'title', 'description', 'images', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($release) {
-                // Decode images JSON and prepend full URLs
-                $release->images = $release->images ? collect(json_decode($release->images))
-                    ->map(fn($img) => asset('storage/' . $img))
-                    ->toArray() : [];
-                return $release;
-            });
+{
+    $releases = Release::select('id', 'title', 'description', 'images', 'created_at')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($release) {
+            // Ensure $release->images is an array and prepend full URLs
+            $release->images = is_array($release->images)
+                ? collect($release->images)->map(fn($img) => asset('storage/' . $img))->toArray()
+                : [];
+            return $release;
+        });
 
-        return response()->json($releases);
-    }
+    return response()->json($releases);
+}
+
 
     /**
      * Store a new release (admin only)
