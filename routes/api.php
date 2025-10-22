@@ -20,14 +20,19 @@ use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 use App\Http\Controllers\Api\SubmissionController\SubmissionController;
-use App\Http\Controllers\Api\OrganizationController\OrganizationController;
-use App\Http\Controllers\Api\OrganizationController\OrganizationSubmissionController;
-use App\Http\Controllers\Api\OrganizationController\RegisterController;
+use App\Http\Controllers\Api\NewsController\NewsController;
+
 use App\Http\Middleware\RoleMiddleware;
 
 // ==================================================
 // 🔓 PUBLIC ROUTES
 // ==================================================
+use App\Http\Controllers\Api\SubscriberController\SubscriberController;
+
+
+Route::post('/subscribe', [SubscriberController::class, 'store'])->name('subscribe.store');
+
+Route::post('/news', [NewsController::class, 'store']);
 Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('rss/podcast/{slug}', [PodcastRssController::class, 'show']);
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
@@ -82,7 +87,9 @@ Route::middleware('auth:sanctum')->post('logout', function (Request $request) {
 Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
     ->prefix('admin')
     ->group(function () {
+        
 
+        
         // Podcasts
         Route::post('podcasts', [PodcastController::class, 'store']);
         Route::put('podcasts/{id}', [PodcastController::class, 'update']);
@@ -170,3 +177,12 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':user'])
     });
 
 
+Route::prefix('subscribe')->group(function () {
+    Route::post('/', [SubscriberController::class, 'store']);
+});
+
+Route::prefix('news')->group(function () {
+    Route::get('/', [NewsController::class, 'index']);
+    Route::get('/{id}', [NewsController::class, 'show']);
+    Route::post('/', [NewsController::class, 'store']);
+});
