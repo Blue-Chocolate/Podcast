@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\PlaylistController\PlaylistController;
 use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 use App\Http\Controllers\Api\NewsController\NewsController;
+use App\Http\Controllers\Api\SearchController\SearchController;
+
 
 use App\Http\Middleware\RoleMiddleware;
 
@@ -186,3 +188,4 @@ Route::prefix('news')->group(function () {
     Route::get('/{id}', [NewsController::class, 'show']);
     Route::post('/', [NewsController::class, 'store']);
 });
+Route::get('/search', [SearchController::class, 'index']);
