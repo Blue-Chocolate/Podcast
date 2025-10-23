@@ -17,70 +17,89 @@ class Episode extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'explicit' => 'boolean',
-         'audio_url' => 'string',
     ];
 
-    // Add these to prevent accessor conflicts with Filament
+    // Don't append anything - let Filament handle raw values
     protected $appends = [];
 
     /**
-     * Get the full URL for the video
+     * Fix duplicated path in video_url and return clean path
      */
-    public function getVideoUrlFullAttribute()
+    public function getVideoUrlAttribute($value)
     {
-        if (empty($this->attributes['video_url'])) {
+        if (empty($value)) {
             return null;
         }
         
-        $value = $this->attributes['video_url'];
-        
-        // If it's already a full URL, return as-is
-        if (filter_var($value, FILTER_VALIDATE_URL)) {
-            return $value;
-        }
-        
-        // Generate URL using asset helper for public storage
-        return asset('storage/episodes/' . $value);
+        // Remove duplicate 'episodes/' if exists
+        return preg_replace('#episodes/episodes/#', 'episodes/', $value);
     }
 
     /**
-     * Get the full URL for the audio
+     * Fix duplicated path in audio_url and return clean path
      */
-    public function getAudioUrlFullAttribute()
+    public function getAudioUrlAttribute($value)
     {
-        if (empty($this->attributes['audio_url'])) {
+        if (empty($value)) {
             return null;
         }
         
-        $value = $this->attributes['audio_url'];
-        
-        // If it's already a full URL, return as-is
-        if (filter_var($value, FILTER_VALIDATE_URL)) {
-            return $value;
-        }
-        
-        // Generate URL using asset helper for public storage
-        return asset('storage/episodes/' . $value);
+        // Remove duplicate 'episodes/' if exists
+        return preg_replace('#episodes/episodes/#', 'episodes/', $value);
     }
 
     /**
-     * Get the full URL for the cover image
+     * Get full public URL for video
      */
-    public function getCoverImageFullAttribute()
+    public function getVideoFullUrlAttribute()
     {
-        if (empty($this->attributes['cover_image'])) {
+        if (empty($this->video_url)) {
             return null;
         }
         
-        $value = $this->attributes['cover_image'];
-        
-        // If it's already a full URL, return as-is
-        if (filter_var($value, FILTER_VALIDATE_URL)) {
-            return $value;
+        // If already a full URL, return as-is
+        if (filter_var($this->video_url, FILTER_VALIDATE_URL)) {
+            return $this->video_url;
         }
         
-        // Generate URL using asset helper for public storage
-        return asset('storage/episodes/' . $value);
+        // Use Storage facade to generate correct URL
+        return Storage::disk('public')->url($this->video_url);
+    }
+
+    /**
+     * Get full public URL for audio
+     */
+    public function getAudioFullUrlAttribute()
+    {
+        if (empty($this->audio_url)) {
+            return null;
+        }
+        
+        // If already a full URL, return as-is
+        if (filter_var($this->audio_url, FILTER_VALIDATE_URL)) {
+            return $this->audio_url;
+        }
+        
+        // Use Storage facade to generate correct URL
+        return Storage::disk('public')->url($this->audio_url);
+    }
+
+    /**
+     * Get full public URL for cover image
+     */
+    public function getCoverImageFullUrlAttribute()
+    {
+        if (empty($this->cover_image)) {
+            return null;
+        }
+        
+        // If already a full URL, return as-is
+        if (filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+            return $this->cover_image;
+        }
+        
+        // Use Storage facade to generate correct URL
+        return Storage::disk('public')->url($this->cover_image);
     }
 
     // Relationships
@@ -93,10 +112,4 @@ class Episode extends Model
     {
         return $this->belongsTo(Season::class);
     }
-    public function getAudioFullUrlAttribute()
-{
-    return $this->audio_url
-        ? url('api/episodes/audios/' . basename($this->audio_url))
-        : null;
-}
 }

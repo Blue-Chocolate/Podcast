@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Filament\Forms\Set; // ✅ مهم جدًا
+use Filament\Forms\Set;
 
 class EpisodeResource extends Resource
 {
@@ -30,112 +30,129 @@ class EpisodeResource extends Resource
     }
 
     public static function form(Form $form): Form
-{
-    return $form->schema([
-        Forms\Components\Select::make('podcast_id')
-            ->label('البودكاست')
-            ->required()
-            ->relationship('podcast', 'title')
-            ->searchable()
-            ->preload(),
+    {
+        return $form->schema([
+            Forms\Components\Select::make('podcast_id')
+                ->label('البودكاست')
+                ->required()
+                ->relationship('podcast', 'title')
+                ->searchable()
+                ->preload(),
 
-        Forms\Components\TextInput::make('season_id')
-            ->label('الموسم')
-            ->numeric()
-            ->nullable(),
+            Forms\Components\TextInput::make('season_id')
+                ->label('الموسم')
+                ->numeric()
+                ->nullable(),
 
-        Forms\Components\TextInput::make('episode_number')
-            ->label('رقم الحلقة')
-            ->numeric()
-            ->nullable(),
+            Forms\Components\TextInput::make('episode_number')
+                ->label('رقم الحلقة')
+                ->numeric()
+                ->nullable(),
 
-        Forms\Components\TextInput::make('title')
-            ->label('العنوان')
-            ->required()
-            ->maxLength(255),
+            Forms\Components\TextInput::make('title')
+                ->label('العنوان')
+                ->required()
+                ->maxLength(255),
 
-        Forms\Components\TextInput::make('slug')
-            ->label('المعرف (slug)')
-            ->required()
-            ->maxLength(200),
+            Forms\Components\TextInput::make('slug')
+                ->label('المعرف (slug)')
+                ->required()
+                ->maxLength(200),
 
-        Forms\Components\Textarea::make('description')
-            ->label('الوصف')
-            ->columnSpanFull(),
+            Forms\Components\Textarea::make('description')
+                ->label('الوصف')
+                ->columnSpanFull(),
 
-        Forms\Components\TextInput::make('short_description')
-            ->label('وصف مختصر')
-            ->maxLength(500)
-            ->nullable(),
+            Forms\Components\TextInput::make('short_description')
+                ->label('وصف مختصر')
+                ->maxLength(500)
+                ->nullable(),
 
-        Forms\Components\TextInput::make('duration_seconds')
-            ->label('مدة الحلقة (بالثواني)')
-            ->required()
-            ->numeric()
-            ->default(0),
+            Forms\Components\TextInput::make('duration_seconds')
+                ->label('مدة الحلقة (بالثواني)')
+                ->required()
+                ->numeric()
+                ->default(0),
 
-        Forms\Components\Toggle::make('explicit')
-            ->label('محتوى صريح'),
+            Forms\Components\Toggle::make('explicit')
+                ->label('محتوى صريح'),
 
-        Forms\Components\Select::make('status')
-            ->label('الحالة')
-            ->options([
-                'draft' => 'Draft',
-                'published' => 'Published',
-                'archived' => 'Archived',
-            ])
-            ->required(),
+            Forms\Components\Select::make('status')
+                ->label('الحالة')
+                ->options([
+                    'draft' => 'Draft',
+                    'published' => 'Published',
+                    'archived' => 'Archived',
+                ])
+                ->required(),
 
-        Forms\Components\DateTimePicker::make('published_at')
-            ->label('تاريخ النشر'),
+            Forms\Components\DateTimePicker::make('published_at')
+                ->label('تاريخ النشر'),
 
-        // Cover image
-        Forms\Components\FileUpload::make('cover_image')
-            ->label('صورة الغلاف')
-            ->image()
-            ->disk('public')
-            ->directory('episodes/covers')
-            ->visibility('public')
-            ->maxSize(10240)
-            ->nullable()
-            ->getUploadedFileNameForStorageUsing(
-                fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-            ),
+            // Cover image
+            Forms\Components\FileUpload::make('cover_image')
+                ->label('صورة الغلاف')
+                ->image()
+                ->disk('public')
+                ->directory('episodes/covers')
+                ->visibility('public')
+                ->maxSize(10240)
+                ->nullable()
+                ->getUploadedFileNameForStorageUsing(
+                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                ),
 
-        // Video upload
-        Forms\Components\FileUpload::make('video_url')
-            ->label('رفع الفيديو')
-            ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-            ->disk('public')
-            ->directory('episodes/videos')
-            ->visibility('public')
-            ->maxSize(512000)
-            ->nullable()
-            ->getUploadedFileNameForStorageUsing(
-                fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-            ),
+            // Video upload - Fixed
+            Forms\Components\FileUpload::make('video_url')
+                ->label('رفع الفيديو')
+                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
+                ->disk('public')
+                ->directory('episodes/videos')
+                ->visibility('public')
+                ->maxSize(512000)
+                ->nullable()
+                ->getUploadedFileNameForStorageUsing(
+                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                )
+                ->saveUploadedFileUsing(function ($file, $component) {
+                    $filename = $component->getUploadedFileNameForStorage($file);
+                    $path = $component->getDirectory() . '/' . $filename;
+                    Storage::disk($component->getDiskName())->putFileAs(
+                        $component->getDirectory(),
+                        $file,
+                        $filename,
+                        $component->getVisibility()
+                    );
+                    return $path;
+                }),
 
-        // ✅ Audio upload (مُحدّث ومضمون لأبل بودكاست)
-        Forms\Components\FileUpload::make('audio_url')
-            ->label('رفع الصوت')
-            ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
-            ->disk('public')
-            ->directory('episodes/audios')
-            ->visibility('public')
-            ->maxSize(51200)
-            ->nullable()
-            ->multiple(false) // مهم جدًا لتفادي الخطأ
-            ->getUploadedFileNameForStorageUsing(
-                fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-            )
-            ->afterStateUpdated(function (Set $set, $state) {
-                if (is_string($state) && !empty($state)) {
-                    $basename = basename($state);
-                    $set('audio_url', 'episodes/audios/' . $basename);
-                }
-            }),
-    ]);
-}
+            // Audio upload - Fixed
+            Forms\Components\FileUpload::make('audio_url')
+                ->label('رفع الصوت')
+                ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
+                ->disk('public')
+                ->directory('episodes/audios')
+                ->visibility('public')
+                ->maxSize(51200)
+                ->nullable()
+                ->multiple(false)
+                ->getUploadedFileNameForStorageUsing(
+                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                )
+                ->saveUploadedFileUsing(function ($file, $component) {
+                    $filename = $component->getUploadedFileNameForStorage($file);
+                    $path = $component->getDirectory() . '/' . $filename;
+                    Storage::disk($component->getDiskName())->putFileAs(
+                        $component->getDirectory(),
+                        $file,
+                        $filename,
+                        $component->getVisibility()
+                    );
+                    return $path;
+                }),
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -168,28 +185,30 @@ class EpisodeResource extends Resource
                     ->disk('public')
                     ->size(50),
 
-                // Video preview
+                // Video preview - Fixed URL generation
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('معاينة الفيديو')
                     ->formatStateUsing(function ($state) {
                         if (!$state || $state instanceof \Closure) return '-';
+                        $url = Storage::disk('public')->url($state);
                         return new HtmlString("
                             <video width='200' controls preload='metadata'>
-                                <source src='" . Storage::disk('public')->url($state) . "' type='video/mp4'>
+                                <source src='{$url}' type='video/mp4'>
                                 متصفحك لا يدعم تشغيل الفيديو.
                             </video>
                         ");
                     })
                     ->html(),
 
-                // Audio preview
+                // Audio preview - Fixed URL generation
                 Tables\Columns\TextColumn::make('audio_url')
                     ->label('معاينة الصوت')
                     ->formatStateUsing(function ($state) {
                         if (!$state || $state instanceof \Closure) return '-';
+                        $url = Storage::disk('public')->url($state);
                         return new HtmlString("
                             <audio controls preload='metadata' style='width: 200px;'>
-                                <source src='" . url('api/' . $state) . "' type='audio/mpeg'>
+                                <source src='{$url}' type='audio/mpeg'>
                                 متصفحك لا يدعم تشغيل الصوت.
                             </audio>
                         ");
