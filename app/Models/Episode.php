@@ -11,7 +11,7 @@ class Episode extends Model
         'podcast_id', 'season_id', 'episode_number', 'title', 'slug',
         'description', 'short_description', 'duration_seconds', 'explicit',
         'status', 'published_at', 'cover_image', 'video_url', 'audio_url',
-        'file_size', 'mime_type'
+        'file_size', 'mime_type', 'views_count'
     ];
 
     protected $casts = [

@@ -60,11 +60,15 @@ class BlogController extends Controller
         $blog = $repository->find($id);
 
         $data = $request->validate([
+            'header_image' => 'nullable|string|max:255',
             'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:255',
             'content' => 'nullable|string',
+
             'category' => 'nullable|string|max:100',
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
+            'announcement' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 

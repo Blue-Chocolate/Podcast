@@ -29,6 +29,7 @@ return new class extends Migration
             $table->boolean('explicit')->default(false);
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->timestamp('published_at')->nullable();
+            $table->integer('views_count')->default(0);
 
             // Media fields
             $table->string('cover_image', 500)->nullable();

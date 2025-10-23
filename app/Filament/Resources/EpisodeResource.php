@@ -12,7 +12,6 @@ use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Filament\Forms\Set;
 
 class EpisodeResource extends Resource
 {
@@ -89,6 +88,13 @@ class EpisodeResource extends Resource
             Forms\Components\DateTimePicker::make('published_at')
                 ->label('تاريخ النشر'),
 
+            // ✅ New views_count field
+            Forms\Components\TextInput::make('views_count')
+                ->label('عدد المشاهدات')
+                ->numeric()
+                ->default(0)
+                ->helperText('يمكنك تعديل عدد المشاهدات يدويًا أو تركه كما هو'),
+
             // Cover image
             Forms\Components\FileUpload::make('cover_image')
                 ->label('صورة الغلاف')
@@ -102,7 +108,7 @@ class EpisodeResource extends Resource
                     fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
                 ),
 
-            // Video upload - Fixed
+            // Video upload
             Forms\Components\FileUpload::make('video_url')
                 ->label('رفع الفيديو')
                 ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
@@ -126,7 +132,7 @@ class EpisodeResource extends Resource
                     return $path;
                 }),
 
-            // Audio upload - Fixed
+            // Audio upload
             Forms\Components\FileUpload::make('audio_url')
                 ->label('رفع الصوت')
                 ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
@@ -175,6 +181,12 @@ class EpisodeResource extends Resource
                         'archived' => 'danger',
                     }),
 
+                Tables\Columns\TextColumn::make('views_count')
+                    ->label('عدد المشاهدات')
+                    ->sortable()
+                    ->badge()
+                    ->color('info'),
+
                 Tables\Columns\TextColumn::make('published_at')
                     ->label('تاريخ النشر')
                     ->dateTime()
@@ -185,7 +197,6 @@ class EpisodeResource extends Resource
                     ->disk('public')
                     ->size(50),
 
-                // Video preview - Fixed URL generation
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('معاينة الفيديو')
                     ->formatStateUsing(function ($state) {
@@ -200,7 +211,6 @@ class EpisodeResource extends Resource
                     })
                     ->html(),
 
-                // Audio preview - Fixed URL generation
                 Tables\Columns\TextColumn::make('audio_url')
                     ->label('معاينة الصوت')
                     ->formatStateUsing(function ($state) {

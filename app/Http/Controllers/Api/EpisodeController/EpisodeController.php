@@ -30,17 +30,24 @@ class EpisodeController extends Controller
     }
 
     public function show($id, ShowEpisodeAction $action)
-    {
-        try {
-            $episode = $action->execute($id);
-            return response()->json(['status' => 'success', 'data' => $episode]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
-    }
+{
+    try {
+        $episode = $action->execute($id);
 
+        // ✅ Increment the view count safely
+        $episode->increment('views_count');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $episode->fresh(), // refresh to show updated count
+        ]);
+
+    } catch (ModelNotFoundException $e) {
+        return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
+    } catch (Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+}
     public function store(Request $request, CreateEpisodeAction $action)
     {
         try {
