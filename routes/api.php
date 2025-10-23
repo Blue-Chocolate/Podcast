@@ -22,6 +22,8 @@ use App\Http\Controllers\Api\ReleaseController\ReleaseController;
 use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 use App\Http\Controllers\Api\NewsController\NewsController;
 use App\Http\Controllers\Api\SearchController\SearchController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+
 
 
 use App\Http\Middleware\RoleMiddleware;
@@ -30,6 +32,7 @@ use App\Http\Middleware\RoleMiddleware;
 // 🔓 PUBLIC ROUTES
 // ==================================================
 use App\Http\Controllers\Api\SubscriberController\SubscriberController;
+Route::post('/register', [RegisteredUserController::class, 'store']);
 
 
 Route::post('/subscribe', [SubscriberController::class, 'store'])->name('subscribe.store');
