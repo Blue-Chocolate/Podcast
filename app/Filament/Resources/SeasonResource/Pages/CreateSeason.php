@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SeasonResource\Pages;
 
 use App\Filament\Resources\SeasonResource;
 use Filament\Resources\Pages\CreateRecord;
+use App\Models\Episode;
 
 class CreateSeason extends CreateRecord
 {
@@ -11,8 +12,9 @@ class CreateSeason extends CreateRecord
 
     protected function afterCreate(): void
     {
-        if (isset($this->data['episode_ids'])) {
-            $this->record->episodes()->sync($this->data['episode_ids']);
+        if (!empty($this->data['episode_ids'])) {
+            Episode::whereIn('id', $this->data['episode_ids'])
+                ->update(['season_id' => $this->record->id]);
         }
     }
 }

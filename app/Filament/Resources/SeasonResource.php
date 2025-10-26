@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SeasonResource\Pages;
+use App\Filament\Resources\SeasonResource\RelationManagers\EpisodesRelationManager;
 use App\Models\Season;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,7 +17,6 @@ class SeasonResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'إدارة البودكاست';
 
-    // Model labels بالعربي
     public static function getModelLabel(): string
     {
         return 'موسم';
@@ -27,7 +27,7 @@ class SeasonResource extends Resource
         return 'المواسم';
     }
 
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -54,14 +54,6 @@ class SeasonResource extends Resource
 
                 Forms\Components\DatePicker::make('release_date')
                     ->label('تاريخ الإصدار'),
-
-                Forms\Components\Select::make('episode_ids')
-                    ->label('الحلقات')
-                    ->multiple()
-                    ->relationship('episodes', 'title')
-                    ->searchable()
-                    ->preload()
-                    ->helperText('اختر حلقة واحدة أو أكثر لتضمينها في هذا الموسم.'),
             ]);
     }
 
@@ -69,18 +61,30 @@ class SeasonResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->label('الرقم'),
+                Tables\Columns\TextColumn::make('id')->label('ID'),
                 Tables\Columns\TextColumn::make('podcast.title')->label('البودكاست'),
-                Tables\Columns\TextColumn::make('episode_number')->label('رقم الموسم')->sortable(),
+                Tables\Columns\TextColumn::make('number')->label('رقم الموسم')->sortable(),
                 Tables\Columns\TextColumn::make('title')->label('العنوان')->searchable(),
                 Tables\Columns\TextColumn::make('release_date')->label('تاريخ الإصدار')->date(),
-                Tables\Columns\TextColumn::make('episodes_count')->counts('episodes')->label('عدد الحلقات'),
+                Tables\Columns\TextColumn::make('episodes_count')
+                    ->counts('episodes')
+                    ->label('عدد الحلقات'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->label('عرض'),
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            EpisodesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

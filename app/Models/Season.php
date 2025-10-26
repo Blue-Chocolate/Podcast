@@ -28,4 +28,5 @@ class Season extends Model
         return $this->hasMany(Episode::class, 'season_id')
             ->orderBy('episode_number');
     }
+    
 }
