@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EpisodeResource\Pages;
 use App\Models\Episode;
+use App\Models\Season;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,6 +18,7 @@ class EpisodeResource extends Resource
 {
     protected static ?string $model = Episode::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'إدارة البودكاست';
 
     public static function getModelLabel(): string
     {
@@ -31,17 +33,39 @@ class EpisodeResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            // Podcast - reactive so season list updates when podcast changes
             Forms\Components\Select::make('podcast_id')
                 ->label('البودكاست')
                 ->required()
                 ->relationship('podcast', 'title')
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->reactive()
+                // clear season when podcast changed
+                ->afterStateUpdated(function ($state, callable $set) {
+                    $set('season_id', null);
+                }),
 
-            Forms\Components\TextInput::make('season_id')
+            // Season - options depend on selected podcast (if any), safe for create & edit
+            Forms\Components\Select::make('season_id')
                 ->label('الموسم')
-                ->numeric()
-                ->nullable(),
+                ->options(function (callable $get) {
+                    $podcastId = $get('podcast_id');
+
+                    $query = Season::query();
+
+                    // If podcast selected, filter seasons by podcast (preferred UX)
+                    if ($podcastId) {
+                        $query->where('podcast_id', $podcastId);
+                    }
+
+                    // Order by number for nicer UX, then pluck to array
+                    return $query->orderBy('number')->pluck('title', 'id')->toArray();
+                })
+                ->searchable()
+                ->preload()
+                ->nullable()
+                ->helperText('اختر الموسم الذي تنتمي إليه هذه الحلقة (اختياري).'),
 
             Forms\Components\TextInput::make('episode_number')
                 ->label('رقم الحلقة')
@@ -56,7 +80,10 @@ class EpisodeResource extends Resource
             Forms\Components\TextInput::make('slug')
                 ->label('المعرف (slug)')
                 ->required()
-                ->maxLength(200),
+                ->maxLength(200)
+                ->unique(ignoreRecord: true)
+                ->lazy()
+                ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
 
             Forms\Components\Textarea::make('description')
                 ->label('الوصف')
@@ -69,7 +96,6 @@ class EpisodeResource extends Resource
 
             Forms\Components\TextInput::make('duration_seconds')
                 ->label('مدة الحلقة (بالثواني)')
-                ->required()
                 ->numeric()
                 ->default(0),
 
@@ -88,12 +114,10 @@ class EpisodeResource extends Resource
             Forms\Components\DateTimePicker::make('published_at')
                 ->label('تاريخ النشر'),
 
-            // ✅ New views_count field
             Forms\Components\TextInput::make('views_count')
                 ->label('عدد المشاهدات')
                 ->numeric()
-                ->default(0)
-                ->helperText('يمكنك تعديل عدد المشاهدات يدويًا أو تركه كما هو'),
+                ->default(0),
 
             // Cover image
             Forms\Components\FileUpload::make('cover_image')
@@ -119,18 +143,7 @@ class EpisodeResource extends Resource
                 ->nullable()
                 ->getUploadedFileNameForStorageUsing(
                     fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                )
-                ->saveUploadedFileUsing(function ($file, $component) {
-                    $filename = $component->getUploadedFileNameForStorage($file);
-                    $path = $component->getDirectory() . '/' . $filename;
-                    Storage::disk($component->getDiskName())->putFileAs(
-                        $component->getDirectory(),
-                        $file,
-                        $filename,
-                        $component->getVisibility()
-                    );
-                    return $path;
-                }),
+                ),
 
             // Audio upload
             Forms\Components\FileUpload::make('audio_url')
@@ -141,21 +154,9 @@ class EpisodeResource extends Resource
                 ->visibility('public')
                 ->maxSize(51200)
                 ->nullable()
-                ->multiple(false)
                 ->getUploadedFileNameForStorageUsing(
                     fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                )
-                ->saveUploadedFileUsing(function ($file, $component) {
-                    $filename = $component->getUploadedFileNameForStorage($file);
-                    $path = $component->getDirectory() . '/' . $filename;
-                    Storage::disk($component->getDiskName())->putFileAs(
-                        $component->getDirectory(),
-                        $file,
-                        $filename,
-                        $component->getVisibility()
-                    );
-                    return $path;
-                }),
+                ),
         ]);
     }
 
@@ -163,15 +164,9 @@ class EpisodeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
-                    ->label('العنوان')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('slug')
-                    ->label('المعرف')
-                    ->searchable(),
-
+                Tables\Columns\TextColumn::make('title')->label('العنوان')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('podcast.title')->label('البودكاست')->sortable(),
+                Tables\Columns\TextColumn::make('season.title')->label('الموسم')->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
@@ -180,50 +175,12 @@ class EpisodeResource extends Resource
                         'draft' => 'warning',
                         'archived' => 'danger',
                     }),
-
                 Tables\Columns\TextColumn::make('views_count')
                     ->label('عدد المشاهدات')
                     ->sortable()
                     ->badge()
                     ->color('info'),
-
-                Tables\Columns\TextColumn::make('published_at')
-                    ->label('تاريخ النشر')
-                    ->dateTime()
-                    ->sortable(),
-
-                Tables\Columns\ImageColumn::make('cover_image')
-                    ->label('الغلاف')
-                    ->disk('public')
-                    ->size(50),
-
-                Tables\Columns\TextColumn::make('video_url')
-                    ->label('معاينة الفيديو')
-                    ->formatStateUsing(function ($state) {
-                        if (!$state || $state instanceof \Closure) return '-';
-                        $url = Storage::disk('public')->url($state);
-                        return new HtmlString("
-                            <video width='200' controls preload='metadata'>
-                                <source src='{$url}' type='video/mp4'>
-                                متصفحك لا يدعم تشغيل الفيديو.
-                            </video>
-                        ");
-                    })
-                    ->html(),
-
-                Tables\Columns\TextColumn::make('audio_url')
-                    ->label('معاينة الصوت')
-                    ->formatStateUsing(function ($state) {
-                        if (!$state || $state instanceof \Closure) return '-';
-                        $url = Storage::disk('public')->url($state);
-                        return new HtmlString("
-                            <audio controls preload='metadata' style='width: 200px;'>
-                                <source src='{$url}' type='audio/mpeg'>
-                                متصفحك لا يدعم تشغيل الصوت.
-                            </audio>
-                        ");
-                    })
-                    ->html(),
+                Tables\Columns\TextColumn::make('published_at')->label('تاريخ النشر')->dateTime(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -238,11 +195,6 @@ class EpisodeResource extends Resource
                 Tables\Actions\ViewAction::make()->label('عرض'),
                 Tables\Actions\EditAction::make()->label('تعديل'),
                 Tables\Actions\DeleteAction::make()->label('حذف'),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-                ]),
             ]);
     }
 
