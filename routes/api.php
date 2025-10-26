@@ -193,3 +193,12 @@ Route::prefix('news')->group(function () {
     Route::post('/', [NewsController::class, 'store']);
 });
 Route::get('/search', [SearchController::class, 'index']);
+
+use App\Http\Controllers\Api\ContactUsController\ContactUsController;
+
+Route::prefix('contact')->group(function () {
+    Route::get('/', [ContactUsController::class, 'index']);
+    Route::get('/{id}', [ContactUsController::class, 'show']);
+    Route::post('/', [ContactUsController::class, 'store']);
+    Route::delete('/{id}', [ContactUsController::class, 'destroy']);
+});
