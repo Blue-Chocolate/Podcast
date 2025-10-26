@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\EpisodeController\EpisodeController;
 use App\Http\Controllers\Api\CategoryController\CategoryController;
 use App\Http\Controllers\Api\PodcastRSSController\PodcastRssController;
 use App\Http\Controllers\Api\FeedController\FeedController;
-use App\Http\Controllers\Api\SeasonController\SeasonController;
 use App\Http\Controllers\Api\EpisodeFileController\EpisodeFileController;
 use App\Http\Controllers\Api\TranscriptController\TranscriptController;
 use App\Http\Controllers\Api\PersonController\PersonController;
@@ -101,12 +100,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::put('podcasts/{id}', [PodcastController::class, 'update']);
         Route::delete('podcasts/{id}', [PodcastController::class, 'destroy']);
 
-        // Seasons
-        Route::get('seasons', [SeasonController::class, 'index']);
-        Route::get('seasons/{id}', [SeasonController::class, 'show']);
-        Route::post('seasons', [SeasonController::class, 'store']);
-        Route::put('seasons/{id}', [SeasonController::class, 'update']);
-        Route::delete('seasons/{id}', [SeasonController::class, 'destroy']);
+       
 
         // Episodes
         // Route::get('episodes', [EpisodeController::class, 'index']);
@@ -202,3 +196,14 @@ Route::prefix('contact')->group(function () {
     Route::post('/', [ContactUsController::class, 'store']);
     Route::delete('/{id}', [ContactUsController::class, 'destroy']);
 });
+
+use App\Http\Controllers\Api\SeasonController\SeasonController;
+
+Route::prefix('seasons')->group(function () {
+    Route::get('/', [SeasonController::class, 'index']);      // GET all
+    Route::get('/{id}', [SeasonController::class, 'show']);   // GET one
+    Route::post('/', [SeasonController::class, 'store']);     // POST create
+    Route::put('/{id}', [SeasonController::class, 'update']); // PUT update
+    Route::delete('/{id}', [SeasonController::class, 'destroy']); // DELETE
+});
+

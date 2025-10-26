@@ -3,54 +3,88 @@
 namespace App\Http\Controllers\Api\SeasonController;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\SeasonRepository;
 use Illuminate\Http\Request;
-use App\Actions\Season\ListSeasonsAction;
-use App\Actions\Season\ShowSeasonAction;
-use App\Actions\Season\CreateSeasonAction;
-use App\Actions\Season\UpdateSeasonAction;
-use App\Actions\Season\DeleteSeasonAction;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class SeasonController extends Controller
 {
-    public function index(ListSeasonsAction $listAction)
+    protected SeasonRepository $repository;
+
+    public function __construct(SeasonRepository $repository)
     {
-        return response()->json($listAction->execute());
+        $this->repository = $repository;
     }
 
-    public function show(int $id, ShowSeasonAction $showAction)
+    /**
+     * GET /api/seasons
+     * Get all seasons with podcasts and episodes
+     */
+    public function index(): JsonResponse
     {
-        return response()->json($showAction->execute($id));
+        $seasons = $this->repository->all();
+        return response()->json($seasons);
     }
 
-    public function store(Request $request, CreateSeasonAction $createAction)
+    /**
+     * GET /api/seasons/{id}
+     * Get a single season with its episodes
+     */
+    public function show(int $id): JsonResponse
     {
-        $data = $request->validate([
+        try {
+            $season = $this->repository->find($id);
+            return response()->json($season);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Season not found'], 404);
+        }
+    }
+
+    /**
+     * POST /api/seasons
+     * Create a new season
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
             'podcast_id' => 'required|exists:podcasts,id',
             'number' => 'required|integer',
-            'title' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'release_date' => 'nullable|date',
         ]);
 
-        return response()->json($createAction->execute($data), 201);
+        $season = $this->repository->create($validated);
+
+        return response()->json($season, 201);
     }
 
-    public function update(Request $request, int $id, UpdateSeasonAction $updateAction)
+    /**
+     * PUT /api/seasons/{id}
+     * Update a season
+     */
+    public function update(Request $request, int $id): JsonResponse
     {
-        $data = $request->validate([
-            'podcast_id' => 'sometimes|exists:podcasts,id',
+        $validated = $request->validate([
             'number' => 'sometimes|integer',
-            'title' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'release_date' => 'nullable|date',
         ]);
 
-        return response()->json($updateAction->execute($id, $data));
+        $season = $this->repository->update($id, $validated);
+
+        return response()->json($season);
     }
 
-    public function destroy(int $id, DeleteSeasonAction $deleteAction)
+    /**
+     * DELETE /api/seasons/{id}
+     * Delete a season (and cascade episodes)
+     */
+    public function destroy(int $id): JsonResponse
     {
-        $deleteAction->execute($id);
+        $this->repository->delete($id);
         return response()->json(['message' => 'Season deleted successfully']);
     }
 }
