@@ -211,3 +211,6 @@ Route::prefix('seasons')->group(function () {
     Route::delete('/{id}', [SeasonController::class, 'destroy']); // DELETE
 });
 
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json($request->user());
+});
