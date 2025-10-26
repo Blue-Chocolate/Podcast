@@ -120,17 +120,17 @@ class EpisodeResource extends Resource
                 ->getUploadedFileNameForStorageUsing(
                     fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
                 )
-               ->saveUploadedFileUsing(function ($file, $component) {
-    $filename = $component->getUploadedFileNameForStorage($file);
-    Storage::disk($component->getDiskName())->putFileAs(
-        $component->getDirectory(),
-        $file,
-        $filename,
-        $component->getVisibility()
-    );
-    // ✅ رجّع فقط اسم الملف بدون المسار
-    return $filename;
-}),
+                ->saveUploadedFileUsing(function ($file, $component) {
+                    $filename = $component->getUploadedFileNameForStorage($file);
+                    $path = $component->getDirectory() . '/' . $filename;
+                    Storage::disk($component->getDiskName())->putFileAs(
+                        $component->getDirectory(),
+                        $file,
+                        $filename,
+                        $component->getVisibility()
+                    );
+                    return $path;
+                }),
 
             // Audio upload
             Forms\Components\FileUpload::make('audio_url')

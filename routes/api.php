@@ -39,6 +39,7 @@ Route::post('/subscribe', [SubscriberController::class, 'store'])->name('subscri
 
 Route::post('/news', [NewsController::class, 'store']);
 Route::get('releases', [ReleaseController::class, 'index']);
+
 Route::get('rss/podcast/{slug}', [PodcastRssController::class, 'show']);
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 Route::post('submissions', [SubmissionController::class, 'store']);
