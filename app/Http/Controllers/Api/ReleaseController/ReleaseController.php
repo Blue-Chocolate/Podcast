@@ -13,6 +13,31 @@ class ReleaseController extends Controller
     /**
      * Get all releases (public)
      */
+    public function show($id)
+{
+    $release = Release::select('id', 'title', 'description', 'images', 'file_path', 'excel_path', 'powerbi_path', 'created_at')
+        ->find($id);
+
+    if (!$release) {
+        return response()->json(['error' => 'Release not found.'], 404);
+    }
+
+    // Generate full image URLs directly
+    $images = collect($release->images ?? [])
+        ->map(fn($img) => asset('storage/' . $img))
+        ->toArray();
+
+    return response()->json([
+        'id' => $release->id,
+        'title' => $release->title,
+        'description' => $release->description,
+        'images' => $images,
+        'file_url' => $release->file_path ? asset('storage/' . $release->file_path) : null,
+        'excel_url' => $release->excel_path ? asset('storage/' . $release->excel_path) : null,
+        'powerbi_url' => $release->powerbi_path ? asset('storage/' . $release->powerbi_path) : null,
+        'created_at' => $release->created_at,
+    ]);
+}
     public function index()
 {
     $releases = Release::select('id', 'title', 'description', 'images', 'created_at')

@@ -50,6 +50,10 @@ Route::get('podcasts/{id}', [PodcastController::class, 'show']);
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
 
+Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
+Route::get('/releases/{id}', [\App\Http\Controllers\Api\ReleaseController\ReleaseController::class, 'show']);
+
+
 // 🎵 Audio files route - لازم يبقى في الآخر
 Route::get('episodes/audios/{filename}', function ($filename) {
     $path = public_path('storage/episodes/audios/' . $filename);
@@ -173,7 +177,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':user'])
     ->group(function () {
         Route::get('playlists', [PlaylistController::class, 'index']);
         Route::get('playlists/{id}', [PlaylistController::class, 'show']);
-        Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
+        
     });
 
 
