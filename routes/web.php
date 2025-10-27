@@ -42,3 +42,9 @@ Route::get('/forms', function () {
 
 Route::get('/api/rss/podcast/{slug}', [PodcastRssController::class, 'show'])
     ->name('podcast.rss');
+
+
+
+Route::get('/videos/{file}', function ($file) {
+    return response()->file(storage_path('app/public/episodes/videos/' . $file));
+});

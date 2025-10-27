@@ -36,6 +36,8 @@ class EpisodeController extends Controller
 
         // ✅ Increment the view count safely
         $episode->increment('views_count');
+        $episode->video_url = url('/videos/' . $episode->video_filename);
+
 
         return response()->json([
             'status' => 'success',
