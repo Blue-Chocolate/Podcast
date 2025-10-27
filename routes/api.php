@@ -82,6 +82,9 @@ Route::post('login', function (Request $request) {
     return response()->json([
         'token' => $token,
         'role' => $user->role,
+        'name' => $user->name,
+        'email' => $user->email,
+        'avatar' => $user->avatar,
     ]);
 });
 
@@ -106,9 +109,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
 
        
 
-        // Episodes
-        // Route::get('episodes', [EpisodeController::class, 'index']);
-        // Route::get('episodes/{id}', [EpisodeController::class, 'show']);
+  
         Route::post('episodes', [EpisodeController::class, 'store']);
         Route::put('episodes/{id}', [EpisodeController::class, 'update']);
         Route::delete('episodes/{id}', [EpisodeController::class, 'destroy']);
@@ -123,9 +124,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         // Transcriptswhe
         Route::get('transcripts', [TranscriptController::class, 'index']);
         Route::get('transcripts/{id}', [TranscriptController::class, 'show']);
-        Route::post('transcripts', [TranscriptController::class, 'store']);
-        Route::put('transcripts/{id}', [TranscriptController::class, 'update']);
-        Route::delete('transcripts/{id}', [TranscriptController::class, 'destroy']);
+       
 
         // People
         Route::get('people', [PersonController::class, 'index']);
@@ -137,31 +136,16 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         // Categories
         Route::get('categories', [CategoryController::class, 'index']);
         Route::get('categories/{id}', [CategoryController::class, 'show']);
-        Route::post('categories', [CategoryController::class, 'store']);
-        Route::put('categories/{id}', [CategoryController::class, 'update']);
-        Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
-
-        // Blogs
-        // Route::get('blogs', [BlogController::class, 'index']);
-        // Route::get('blogs/{id}', [BlogController::class, 'show']);
-        Route::post('blogs', [BlogController::class, 'store']);
-        Route::put('blogs/{id}', [BlogController::class, 'update']);
-        Route::delete('blogs/{id}', [BlogController::class, 'destroy']);
-
+        
         // Posts
         Route::get('posts', [PostController::class, 'index']);
         Route::get('posts/{id}', [PostController::class, 'show']);
-        Route::post('posts', [PostController::class, 'store']);
-        Route::put('posts/{id}', [PostController::class, 'update']);
-        Route::delete('posts/{id}', [PostController::class, 'destroy']);
+      
 
         // Playlists
         Route::get('playlists', [PlaylistController::class, 'index']);
         Route::get('playlists/{id}', [PlaylistController::class, 'show']);
-        Route::post('playlists', [PlaylistController::class, 'store']);
-        Route::put('playlists/{id}', [PlaylistController::class, 'update']);
-        Route::delete('playlists/{id}', [PlaylistController::class, 'destroy']);
-        Route::post('playlists/{id}/attach-episodes', [PlaylistController::class, 'attachEpisodes']);
+        
 
         // Test admin
         Route::get('test', function () {

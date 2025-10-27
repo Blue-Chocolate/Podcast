@@ -137,7 +137,7 @@ class EpisodeResource extends Resource
                 ->label('رفع الفيديو')
                 ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
                 ->disk('public')
-                ->directory('episodes/videos')
+                ->directory('videos')
                 ->visibility('public')
                 ->maxSize(512000)
                 ->nullable()
