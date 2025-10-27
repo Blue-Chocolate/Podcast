@@ -121,10 +121,10 @@ class EpisodeResource extends Resource
 
             // Cover image
             Forms\Components\FileUpload::make('cover_image')
-                ->label('صورة الاعلان')
+                ->label('صورة الغلاف')
                 ->image()
                 ->disk('public')
-                ->directory('episodes/covers')
+                ->directory('covers')
                 ->visibility('public')
                 ->maxSize(10240)
                 ->nullable()

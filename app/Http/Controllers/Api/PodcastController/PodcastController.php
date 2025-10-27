@@ -11,15 +11,34 @@ use App\Actions\Podcast\DeletePodcastAction;
 
 class PodcastController extends Controller
 {
-    public function index(ShowPodcastAction $showAction , Request $request)
-    {
-        $limit = $request->query('limit', 10);
-    $podcasts = \App\Models\Podcast::paginate($limit);
+    public function index(ShowPodcastAction $showAction, Request $request)
+{
+    $limit = $request->query('limit', 10);
+
+    $podcasts = \App\Models\Podcast::with(['episodes' => function ($query) {
+        $query->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'created_at');
+    }])
+        ->paginate($limit);
+
+    // Map URLs for audio and images if needed
+    $podcasts->getCollection()->transform(function ($podcast) {
+        // Make cover_image full URL
+        if ($podcast->cover_image && !str_starts_with($podcast->cover_image, 'http')) {
+            $podcast->cover_image = asset('storage/' . ltrim($podcast->cover_image, '/'));
+        }
+
+        // Make each episode’s audio URL full
+        foreach ($podcast->episodes as $episode) {
+            if ($episode->audio_url && !str_starts_with($episode->audio_url, 'http')) {
+                $episode->audio_url = asset('storage/' . ltrim($episode->audio_url, '/'));
+            }
+        }
+
+        return $podcast;
+    });
 
     return response()->json($podcasts);
-        // if you want all podcasts, you can add a separate ListPodcastsAction
-        // return response()->json($showAction->execute(0)); // 0 or separate list action
-    }
+}
 
     public function show(int $id, ShowPodcastAction $showAction)
     {

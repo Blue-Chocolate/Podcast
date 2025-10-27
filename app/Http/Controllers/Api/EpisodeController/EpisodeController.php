@@ -19,7 +19,7 @@ use Exception;
 
 class EpisodeController extends Controller
 {
-    public function index(ListEpisodesAction $action , Request $request)
+     public function index(ListEpisodesAction $action , Request $request)
     {
      $limit = $request->query('limit', 10);
         $episodes = \App\Models\Episode::paginate($limit);
@@ -93,12 +93,12 @@ class EpisodeController extends Controller
 
             // ✅ Handle image upload
             if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('storage/images'), $fileName);
-                $data['image_filename'] = $fileName;
-                $data['image_url'] = url('storage/images/' . $fileName);
-            }
+    $file = $request->file('image');
+    $fileName = time() . '_' . $file->getClientOriginalName();
+    $file->move(public_path('storage/covers'), $fileName);
+$data['image_url'] = url('covers/' . $fileName);
+    $data['image_url'] = url('images/' . $fileName);
+}
 
             $episode = $action->execute($data);
 

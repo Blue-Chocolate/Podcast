@@ -18,9 +18,26 @@ class BlogController extends Controller
 {
     public function index(ListBlogsAction $action, Request $request)
     {
-        $limit = $request->query('limit', 10); // default limit = 10 if not provided
-        $blogs = \App\Models\Blog::limit($limit)->get();
-        return response()->json($blogs);
+        $limit = $request->query('limit', 10); // Default = 10
+        $page = $request->query('page', 1);    // Default = 1
+        $offset = ($page - 1) * $limit;
+
+        $blogs = Blog::offset($offset)
+            ->limit($limit)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $total = Blog::count();
+
+        return response()->json([
+            'data' => $blogs,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $total,
+                'last_page' => ceil($total / $limit),
+            ],
+        ]);
     }
 
     public function show($id, ShowBlogAction $action)
