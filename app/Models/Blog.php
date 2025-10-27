@@ -21,7 +21,8 @@ class Blog extends Model
         'publish_date',
         'views',
         'image',
-        'announcement'
+        'announcement',
+        'footer',
     ];
 
     /*

@@ -11,9 +11,11 @@ use App\Actions\Podcast\DeletePodcastAction;
 
 class PodcastController extends Controller
 {
-    public function index(ShowPodcastAction $showAction)
+    public function index(ShowPodcastAction $showAction , Request $request)
     {
-        $podcasts = \App\Models\Podcast::all();
+        $limit = $request->query('limit', 10);
+    $podcasts = \App\Models\Podcast::paginate($limit);
+
     return response()->json($podcasts);
         // if you want all podcasts, you can add a separate ListPodcastsAction
         // return response()->json($showAction->execute(0)); // 0 or separate list action

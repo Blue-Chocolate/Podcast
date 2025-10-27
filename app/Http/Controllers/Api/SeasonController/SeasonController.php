@@ -21,9 +21,10 @@ class SeasonController extends Controller
      * GET /api/seasons
      * Get all seasons with podcasts and episodes
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $seasons = $this->repository->all();
+        $limit = $request->query('limit', 10);
+        $seasons = $this->repository->paginate($limit);
         return response()->json($seasons);
     }
 

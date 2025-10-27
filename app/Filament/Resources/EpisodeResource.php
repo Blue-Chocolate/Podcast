@@ -121,7 +121,7 @@ class EpisodeResource extends Resource
 
             // Cover image
             Forms\Components\FileUpload::make('cover_image')
-                ->label('صورة الغلاف')
+                ->label('صورة الاعلان')
                 ->image()
                 ->disk('public')
                 ->directory('episodes/covers')
@@ -150,7 +150,7 @@ class EpisodeResource extends Resource
                 ->label('رفع الصوت')
                 ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
                 ->disk('public')
-                ->directory('episodes/audios')
+                ->directory('audios')
                 ->visibility('public')
                 ->maxSize(51200)
                 ->nullable()

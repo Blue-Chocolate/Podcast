@@ -7,6 +7,10 @@ use App\Models\Podcast;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class PodcastRssController extends Controller
 {
@@ -36,46 +40,52 @@ class PodcastRssController extends Controller
         }
     }
 
-    private function generateRss($slug)
-    {
-        $podcast = Podcast::where('slug', $slug)
-            ->with(['episodes' => function ($query) {
-                $query->where('status', 'published')
-                      ->whereNotNull('published_at')
-                      ->orderBy('published_at', 'desc');
-            }])
-            ->firstOrFail();
+    public function generateRss($slug)
+{
+    $podcast = Podcast::where('slug', $slug)
+        ->with(['episodes' => function ($query) {
+            $query->where('status', 'published')
+                ->orderBy('published_at', 'desc');
+        }])
+        ->firstOrFail();
 
-        // Merge external RSS if exists
+    try {
         if ($podcast->rss_url) {
-            try {
-                $response = Http::timeout(10)->get($podcast->rss_url);
-                if ($response->successful()) {
-                    $externalXml = simplexml_load_string($response->body());
-                    
-                    foreach ($externalXml->channel->item ?? [] as $item) {
-                        $podcast->episodes->push((object)[
-                            'title' => (string)$item->title,
-                            'description' => (string)$item->description,
-                            'audio_url' => (string)($item->enclosure['url'] ?? ''),
-                            'video_url' => null,
-                            'file_size' => (int)($item->enclosure['length'] ?? 0),
-                            'mime_type' => (string)($item->enclosure['type'] ?? 'audio/mpeg'),
-                            'published_at' => \Carbon\Carbon::parse((string)$item->pubDate),
-                            'slug' => uniqid('external-'),
-                            'duration_seconds' => $this->parseDuration((string)($item->children('itunes', true)->duration ?? '0')),
-                            'explicit' => false,
-                        ]);
+            $response = Http::timeout(10)->get($podcast->rss_url);
+            if ($response->successful()) {
+                $feed = simplexml_load_string($response->body());
+                $channel = $feed->channel;
+                $podcast->title = (string)$channel->title;
+                $podcast->description = (string)$channel->description;
+                $podcast->base_url = url('/');
+
+                $episodes = [];
+                foreach ($channel->item as $item) {
+                    $audioUrl = (string)$item->enclosure['url'] ?? '';
+                    if (!Str::startsWith($audioUrl, 'http')) {
+                        $audioUrl = $podcast->base_url . '/' . ltrim($audioUrl, '/');
                     }
+
+                    $episodes[] = [
+                        'title' => (string)$item->title,
+                        'description' => (string)$item->description,
+                        'audio_url' => $audioUrl,
+                        'file_size' => (int)($item->enclosure['length'] ?? 0),
+                        'mime_type' => (string)($item->enclosure['type'] ?? 'audio/mpeg'),
+                        'published_at' => Carbon::parse((string)$item->pubDate),
+                        'duration' => $this->parseDuration((string)($item->children('itunes', true)->duration ?? '0')),
+                    ];
                 }
-            } catch (\Exception $e) {
-                \Log::warning("Failed to fetch external RSS for {$slug}: " . $e->getMessage());
+                $podcast->episodes = $episodes;
             }
         }
 
-        return view('rss.podcast', compact('podcast'))->render();
+return response(view('rss.podcast', compact('podcast'))->render(), 200)
+    ->header('Content-Type', 'application/rss+xml');        
+    } catch (Exception $e) {
+        Log::warning('Failed to fetch external RSS for ' . $slug . ': ' . $e->getMessage());
     }
-
+}
     private function parseDuration($duration)
     {
         if (is_numeric($duration)) {

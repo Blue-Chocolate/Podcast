@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             // Relations
-            $table->foreignId('podcast_id')->constrained('podcasts')->onDelete('cascade');
+            $table->foreignId('podcast_id')->nullable()->constrained('podcasts')->nullOnDelete();
             $table->foreignId('season_id')->nullable()->constrained('seasons')->nullOnDelete();
             $table->foreignId('transcript_id')->nullable();
 

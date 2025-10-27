@@ -19,8 +19,12 @@ use Exception;
 
 class EpisodeController extends Controller
 {
-    public function index(ListEpisodesAction $action)
+    public function index(ListEpisodesAction $action , Request $request)
     {
+     $limit = $request->query('limit', 10);
+        $episodes = \App\Models\Episode::paginate($limit);
+
+        return response()->json($episodes);
         try {
             $episodes = $action->execute();
             return response()->json(['status' => 'success', 'data' => $episodes]);
@@ -30,55 +34,70 @@ class EpisodeController extends Controller
     }
 
     public function show($id, ShowEpisodeAction $action)
-{
-    try {
-        $episode = $action->execute($id);
+    {
+        try {
+            $episode = $action->execute($id);
 
-        // ✅ Increment the view count safely
-        $episode->increment('views_count');
-        $episode->video_url = url('/videos/' . $episode->video_filename);
+            // ✅ Increment the view count safely
+            $episode->increment('views_count');
+            $episode->video_url = url('/videos/' . $episode->video_filename);
+            $episode->audio_url = url('/audios/' . $episode->audio_filename);
 
+            return response()->json([
+                'status' => 'success',
+                'data' => $episode->fresh(), // refresh to show updated count
+            ]);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $episode->fresh(), // refresh to show updated count
-        ]);
-
-    } catch (ModelNotFoundException $e) {
-        return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
-    } catch (Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
-}
+
     public function store(Request $request, CreateEpisodeAction $action)
     {
         try {
             $data = $request->validate([
                 'podcast_id' => 'required|exists:podcasts,id',
                 'season_id' => 'nullable|exists:seasons,id',
-                'episode_number' => 'nullable|integer',
                 'title' => 'required|string|max:255',
-                'slug' => 'nullable|string|max:200|unique:episodes,slug',
+                'slug' => 'nullable|string|unique:episodes,slug',
                 'description' => 'nullable|string',
-                'short_description' => 'nullable|string|max:500',
-                'duration_seconds' => 'nullable|integer',
+                'duration' => 'nullable|integer',
                 'published_at' => 'nullable|date',
-                'explicit' => 'boolean',
-                'status' => 'in:draft,published,archived',
-                'cover_image' => 'nullable|string|max:500',
-                'categories' => 'nullable|array',
-                'categories.*' => 'exists:categories,id',
-                'file' => 'nullable|file|mimes:mp3,mp4,m4a,wav|max:51200', // up to 50 MB
+                'video' => 'nullable|file|mimes:mp4,mov,avi,wmv|max:51200',
+                'audio' => 'nullable|file|mimes:mp3,wav,aac|max:51200',
+                'image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
-            $data['slug'] = $data['slug'] ?? Str::slug($data['title']) . '-' . uniqid();
+            $data['slug'] = $data['slug'] ?? Str::slug($data['title']) . '_' . uniqid();
 
-            // ✅ Handle file upload (video/audio)
-            if ($request->hasFile('file')) {
-                $path = $request->file('file')->store('episodes', 'public');
-                $data['video_url'] = asset('storage/' . $path);
-                $data['mime_type'] = $request->file('file')->getMimeType();
-                $data['file_size'] = $request->file('file')->getSize();
+            // ✅ Handle video upload
+            if ($request->hasFile('video')) {
+                $file = $request->file('video');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('storage/videos'), $fileName);
+                $data['video_filename'] = $fileName;
+                $data['video_url'] = url('storage/videos/' . $fileName);
+            }
+
+            // ✅ Handle audio upload
+            if ($request->hasFile('audio')) {
+                $file = $request->file('audio');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('storage/audios'), $fileName);
+                $data['audio_filename'] = $fileName;
+                $data['audio_url'] = url('storage/audios/' . $fileName);
+            }
+
+            // ✅ Handle image upload
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('storage/images'), $fileName);
+                $data['image_filename'] = $fileName;
+                $data['image_url'] = url('storage/images/' . $fileName);
             }
 
             $episode = $action->execute($data);
@@ -123,6 +142,7 @@ class EpisodeController extends Controller
 
             $episode = $action->execute($episode, $data);
             return response()->json(['status' => 'success', 'data' => $episode]);
+
         } catch (ValidationException $e) {
             return response()->json(['status' => 'error', 'errors' => $e->errors()], 422);
         } catch (Exception $e) {

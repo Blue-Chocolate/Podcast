@@ -39,8 +39,12 @@ class CategoryController extends Controller
     /**
      * Display a listing of the categories.
      */
-    public function index()
-    {
+    public function index(Request $request)
+    {   
+        $limit = $request->query('limit', 10);
+        $categories = \App\Models\Category::paginate($limit);
+
+        return response()->json($categories);
         try {
             $categories = $this->getAllCategories->execute();
             return response()->json($categories);

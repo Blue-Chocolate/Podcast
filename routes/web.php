@@ -5,7 +5,23 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\Api\PodcastRssController\PodcastRssController;
 
+Route::get('/videos/{file}', function ($file) {
+    $path = base_path('public/storage/videos/' . $file);
+    abort_unless(file_exists($path), 404);
+    return response()->file($path);
+});
 
+Route::get('/audios/{file}', function ($file) {
+    $path = base_path('public/storage/audios/' . $file);
+    abort_unless(file_exists($path), 404);
+    return response()->file($path);
+});
+
+Route::get('/covers/{file}', function ($file) {
+    $path = base_path('public/storage/covers/' . $file);
+    abort_unless(file_exists($path), 404);
+    return response()->file($path);
+});
 Route::get('/', function () {
     return view('welcome');
 });
@@ -40,11 +56,4 @@ Route::get('/forms', function () {
     return view('forms');
 })->middleware(['auth', 'verified'])->name('forms');
 
-Route::get('/api/rss/podcast/{slug}', [PodcastRssController::class, 'show'])
-    ->name('podcast.rss');
-
-
-
-Route::get('/videos/{file}', function ($file) {
-    return response()->file(storage_path('app/public/episodes/videos/' . $file));
-});
+Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'generateRss']);

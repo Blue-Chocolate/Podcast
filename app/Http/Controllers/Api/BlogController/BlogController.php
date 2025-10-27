@@ -12,23 +12,23 @@ use App\Actions\Blogs\{
     ShowBlogAction,
     ListBlogsAction
 };
-USE App\Models\Blog;
+use App\Models\Blog;
 
 class BlogController extends Controller
 {
-    public function index(ListBlogsAction $action)
+    public function index(ListBlogsAction $action, Request $request)
     {
-        $blogs = $action->execute();
+        $limit = $request->query('limit', 10); // default limit = 10 if not provided
+        $blogs = \App\Models\Blog::limit($limit)->get();
         return response()->json($blogs);
     }
 
     public function show($id, ShowBlogAction $action)
     {
         $blog = $action->execute($id);
+        $blog->increment('views');
+
         return response()->json($blog);
-         $blog = Blog::findOrFail($id);
-    $blog->increment('views'); // كل زيارة تزود 1
-    return view('blog.show', compact('blog'));
     }
 
     public function store(Request $request, CreateBlogAction $action)
@@ -36,11 +36,14 @@ class BlogController extends Controller
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
             'content' => 'required|string',
             'category' => 'nullable|string|max:100',
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
+            'announcement' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'footer' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {
@@ -62,14 +65,14 @@ class BlogController extends Controller
         $data = $request->validate([
             'header_image' => 'nullable|string|max:255',
             'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:500',
             'content' => 'nullable|string',
-
             'category' => 'nullable|string|max:100',
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
             'announcement' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'footer' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {
@@ -91,5 +94,4 @@ class BlogController extends Controller
 
         return response()->json(['message' => 'Blog deleted successfully']);
     }
-
 }

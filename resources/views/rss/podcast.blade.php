@@ -11,7 +11,7 @@
     <language>{{ $podcast->language ?? 'en' }}</language>
     <copyright>{{ $podcast->copyright ?? 'All rights reserved' }}</copyright>
     <description><![CDATA[{{ $podcast->description ?? '' }}]]></description>
-    
+
     <itunes:author>{{ $podcast->author ?? 'Unknown' }}</itunes:author>
     <itunes:summary><![CDATA[{{ $podcast->description ?? '' }}]]></itunes:summary>
     <itunes:type>{{ $podcast->type ?? 'episodic' }}</itunes:type>
@@ -21,7 +21,7 @@
     </itunes:owner>
     <itunes:explicit>{{ $podcast->explicit ? 'yes' : 'no' }}</itunes:explicit>
     <itunes:category text="{{ $podcast->category ?? 'Technology' }}" />
-    
+
     @if($podcast->cover_image)
       <itunes:image href="{{ $podcast->cover_image }}" />
       <image>
@@ -36,23 +36,20 @@
         <title>{{ $episode->title }}</title>
         <description><![CDATA[{{ $episode->description ?? $episode->short_description ?? '' }}]]></description>
 
-        {{-- ✅ Updated Enclosure Section --}}
+        {{-- ✅ Enclosure must be directly after description --}}
         @if($episode->video_url)
-          <enclosure 
-            url="{{ Storage::disk('videos')->url($episode->video_url) }}" 
-            length="{{ Storage::disk('videos')->size($episode->video_url) }}" 
-            type="video/mp4" />
+         <enclosure url="https://slategrey-woodpecker-983692.hostingersite.com/videos/{{ basename($episode->video_url) }}" length="{{ @filesize(public_path('storage/videos/' . basename($episode->video_url))) ?: 0 }}" type="video/mp4" />
         @elseif($episode->audio_url)
           <enclosure 
-            url="{{ Storage::disk('videos')->url($episode->audio_url) }}" 
-            length="{{ Storage::disk('videos')->size($episode->audio_url) }}" 
+            url="{{ $episode->audio_url }}" 
+            length="{{ @filesize(public_path('storage/audios/' . basename($episode->audio_url))) ?: 0 }}" 
             type="audio/mpeg" />
         @endif
 
         <guid isPermaLink="true">{{ url('/episodes/' . ($episode->slug ?? uniqid('ep-'))) }}</guid>
         <link>{{ url('/episodes/' . ($episode->slug ?? uniqid('ep-'))) }}</link>
         <pubDate>{{ optional($episode->published_at)->format('D, d M Y H:i:s O') }}</pubDate>
-        
+
         <itunes:title>{{ $episode->title }}</itunes:title>
         <itunes:episodeType>{{ $episode->episode_type ?? 'full' }}</itunes:episodeType>
         @if($episode->episode_number)
@@ -63,7 +60,7 @@
         @endif
         <itunes:duration>{{ $episode->duration_seconds ?? 0 }}</itunes:duration>
         <itunes:explicit>{{ $episode->explicit ? 'yes' : 'no' }}</itunes:explicit>
-        
+
         @if($episode->cover_image)
           <itunes:image href="{{ $episode->cover_image }}" />
         @endif

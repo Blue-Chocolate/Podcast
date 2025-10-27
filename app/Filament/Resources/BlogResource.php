@@ -32,7 +32,6 @@ class BlogResource extends Resource
     {
         return $form
             ->schema([
-                // اختيار المستخدم بالاسم مع إمكانية البحث
                 Forms\Components\Select::make('user_id')
                     ->label('المستخدم')
                     ->relationship('user', 'name')
@@ -44,13 +43,23 @@ class BlogResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                // حقل الوصف الجديد
                 Forms\Components\Textarea::make('description')
                     ->label('الوصف')
                     ->maxLength(500)
                     ->columnSpanFull(),
 
-                // المحتوى كـ RichEditor
+                Forms\Components\TextInput::make('announcement')
+                    ->label('الإعلان')
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+
+                // New Header Image Upload
+                Forms\Components\FileUpload::make('header_image')
+                    ->label('صورة الغلاف')
+                    ->image()
+                    ->directory('blogs/headers')
+                    ->columnSpanFull(),
+
                 Forms\Components\RichEditor::make('content')
                     ->label('المحتوى')
                     ->required()
@@ -61,13 +70,12 @@ class BlogResource extends Resource
                     ->maxLength(100)
                     ->default(null),
 
-                // الحالة باختيارات محددة
                 Forms\Components\Select::make('status')
                     ->label('الحالة')
                     ->options([
                         'published' => 'منشور',
-                        'drafted' => 'مسودة',
-                        'rejected' => 'مرفوض',
+                        'draft' => 'مسودة',
+                        'archived' => 'مؤرشف',
                     ])
                     ->required(),
 
@@ -82,8 +90,14 @@ class BlogResource extends Resource
 
                 Forms\Components\FileUpload::make('image')
                     ->label('الصورة')
-                    ->image(),
+                    ->image()
+                    ->directory('blogs'),
+                Forms\Components\TextInput::make('footer')
+                    ->label('تذييل')
+                    ->maxLength(255)
+                    ->default(null),
             ]);
+
     }
 
     public static function table(Table $table): Table
@@ -99,6 +113,10 @@ class BlogResource extends Resource
                     ->label('العنوان')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('announcement')
+                    ->label('الإعلان')
+                    ->limit(30),
+
                 Tables\Columns\TextColumn::make('category')
                     ->label('التصنيف')
                     ->searchable(),
@@ -108,8 +126,8 @@ class BlogResource extends Resource
                     ->badge()
                     ->colors([
                         'success' => 'published',
-                        'warning' => 'drafted',
-                        'danger' => 'rejected',
+                        'warning' => 'draft',
+                        'secondary' => 'archived',
                     ]),
 
                 Tables\Columns\TextColumn::make('publish_date')
@@ -121,6 +139,9 @@ class BlogResource extends Resource
                     ->label('عدد المشاهدات')
                     ->numeric()
                     ->sortable(),
+
+                Tables\Columns\ImageColumn::make('header_image')
+                    ->label('صورة الغلاف'),
 
                 Tables\Columns\ImageColumn::make('image')
                     ->label('الصورة'),

@@ -39,7 +39,7 @@ class PodcastResource extends Resource
                             return new HtmlString('<span style="color: #999;">احفظ البودكاست أولاً لتوليد رابط RSS</span>');
                         }
 
-                        $rssUrl = route('podcast.rss', $record->slug);
+$rssUrl = route('rss.podcast', $record->slug);
 
                         return new HtmlString('
                             <div style="background: #f0f9ff; padding: 12px; border-radius: 6px; border: 2px solid #0ea5e9;">
