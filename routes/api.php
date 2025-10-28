@@ -22,7 +22,7 @@ use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 use App\Http\Controllers\Api\NewsController\NewsController;
 use App\Http\Controllers\Api\SearchController\SearchController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Api\Doc_Videos\Doc_Videos;
+use App\Http\Controllers\Api\DocVideoController\DocVideoController;
 
 
 
@@ -64,10 +64,11 @@ Route::get('/releases/{id}', [\App\Http\Controllers\Api\ReleaseController\Releas
 Route::prefix('doc_videos')->group(function () {
 
     // ✅ List all doc_videos with pagination
-    Route::get('/', [Doc_Videos::class, 'index']);
+    Route::get('/', [DocVideoController::class, 'index']);
 
     // ✅ Show a specific doc_video
-    Route::get('/{id}', [Doc_Videos::class, 'show']); });
+    Route::get('/{id}', [DocVideoController::class, 'show']);
+});
 
 
 // 🎵 Audio files route - لازم يبقى في الآخر
