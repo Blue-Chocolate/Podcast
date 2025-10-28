@@ -155,7 +155,7 @@ class PodcastResource extends Resource
                 ->formatStateUsing(fn($record) => route('rss.podcast', $record->slug))
                 ->copyable()
                 ->limit(40)
-                ->tooltip(fn($record) => route('rss.podcast', $record->slug)),
+                ->tooltip(fn($record) => route('podcast.rss', $record->slug)),
 
             Tables\Columns\TextColumn::make('language')
                 ->label('اللغة')
@@ -171,7 +171,7 @@ class PodcastResource extends Resource
             Tables\Actions\Action::make('view_rss')
                 ->label('عرض RSS')
                 ->icon('heroicon-o-rss')
-                ->url(fn($record) => route('rss.podcast', $record->slug))
+                ->url(fn($record) => route('podcast.rss', $record->slug))
                 ->openUrlInNewTab()
                 ->color('info'),
 
