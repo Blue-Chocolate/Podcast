@@ -26,50 +26,54 @@
     <itunes:category text="{{ $podcast->category ?? 'Technology' }}" />
 
     @if($podcast->cover_image)
-      <itunes:image href="{{ Str::startsWith($podcast->cover_image, 'http') ? $podcast->cover_image : 'https://haqqeq.com/' . ltrim($podcast->cover_image, '/') }}" />
+      @php
+        $podcastCover = Str::startsWith($podcast->cover_image, 'http')
+            ? $podcast->cover_image
+            : 'https://haqqeq.com/' . ltrim($podcast->cover_image, '/');
+      @endphp
+      <itunes:image href="{{ $podcastCover }}" />
       <image>
-        <url>{{ Str::startsWith($podcast->cover_image, 'http') ? $podcast->cover_image : 'https://haqqeq.com/' . ltrim($podcast->cover_image, '/') }}</url>
+        <url>{{ $podcastCover }}</url>
         <title>{{ $podcast->title }}</title>
         <link>https://haqqeq.com</link>
       </image>
     @endif
 
     @foreach ($podcast->episodes as $episode)
+      @php
+        // Determine audio or video file info
+        $enclosureUrl = null;
+        $enclosureType = null;
+        $enclosureLength = 0;
+
+        if ($episode->audio_url) {
+            $filePath = public_path('audios/' . basename($episode->audio_url));
+            $enclosureUrl = Str::startsWith($episode->audio_url, 'http')
+                ? $episode->audio_url
+                : 'https://haqqeq.com/audios/' . basename($episode->audio_url);
+            $enclosureType = 'audio/mpeg';
+            $enclosureLength = file_exists($filePath) ? filesize($filePath) : 0;
+        } elseif ($episode->video_url) {
+            $filePath = public_path('videos/' . basename($episode->video_url));
+            $enclosureUrl = Str::startsWith($episode->video_url, 'http')
+                ? $episode->video_url
+                : 'https://haqqeq.com/videos/' . basename($episode->video_url);
+            $enclosureType = 'video/mp4';
+            $enclosureLength = file_exists($filePath) ? filesize($filePath) : 0;
+        }
+
+        $episodeCover = $episode->cover_image
+            ? (Str::startsWith($episode->cover_image, 'http')
+                ? $episode->cover_image
+                : 'https://haqqeq.com/' . ltrim($episode->cover_image, '/'))
+            : null;
+      @endphp
+
       <item>
         <title>{{ $episode->title }}</title>
         <description><![CDATA[{{ $episode->description ?? $episode->short_description ?? '' }}]]></description>
 
-        @if($episode->audio_url)
+        @if($enclosureUrl)
           <enclosure 
-            url="{{ Str::startsWith($episode->audio_url, 'http') ? $episode->audio_url : 'https://haqqeq.com/audios/' . basename($episode->audio_url) }}"
-            length="{{ file_exists(public_path('audios/'.basename($episode->audio_url))) ? filesize(public_path('audios/'.basename($episode->audio_url))) : 0 }}"
-            type="audio/mpeg" />
-        @elseif($episode->video_url)
-          <enclosure 
-            url="{{ Str::startsWith($episode->video_url, 'http') ? $episode->video_url : 'https://haqqeq.com/videos/' . basename($episode->video_url) }}"
-            length="{{ file_exists(public_path('videos/'.basename($episode->video_url))) ? filesize(public_path('videos/'.basename($episode->video_url))) : 0 }}"
-            type="video/mp4" />
-        @endif
-
-        <guid isPermaLink="true">https://haqqeq.com/episodes/{{ $episode->slug }}</guid>
-        <link>https://haqqeq.com/episodes/{{ $episode->slug }}</link>
-        <pubDate>{{ $episode->created_at->toRfc2822String() }}</pubDate>
-
-        <itunes:title>{{ $episode->title }}</itunes:title>
-        <itunes:episodeType>{{ $episode->episode_type ?? 'full' }}</itunes:episodeType>
-        @if($episode->episode_number)
-          <itunes:episode>{{ $episode->episode_number }}</itunes:episode>
-        @endif
-        @if($episode->season_id)
-          <itunes:season>{{ $episode->season->season_number ?? 1 }}</itunes:season>
-        @endif
-        <itunes:duration>{{ $episode->duration_seconds ?? 0 }}</itunes:duration>
-        <itunes:explicit>{{ $episode->explicit ? 'yes' : 'no' }}</itunes:explicit>
-
-        @if($episode->cover_image)
-          <itunes:image href="{{ Str::startsWith($episode->cover_image, 'http') ? $episode->cover_image : 'https://haqqeq.com/' . ltrim($episode->cover_image, '/') }}" />
-        @endif
-      </item>
-    @endforeach
-  </channel>
-</rss>
+            url="{{ $enclosureUrl }}"
+            length="{

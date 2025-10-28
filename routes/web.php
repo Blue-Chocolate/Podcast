@@ -62,4 +62,6 @@ Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'generateRss'])-
 
 Route::get('episodes', [EpisodeController::class, 'index']);
 Route::get('episodes/{id}', [EpisodeController::class, 'show']);
+Route::get('episodes/{slug}', [EpisodeController::class, 'show']);
+
 

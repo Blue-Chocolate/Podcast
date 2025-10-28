@@ -34,26 +34,25 @@ class EpisodeController extends Controller
     }
 
     public function show($id, ShowEpisodeAction $action)
-    {
-        try {
-            $episode = $action->execute($id);
+{
+    try {
+        $episode = $action->execute($id);
 
-            // ✅ Increment the view count safely
-            $episode->increment('views_count');
-            $episode->video_url = url('/videos/' . $episode->video_filename);
-            $episode->audio_url = url('/audios/' . $episode->audio_filename);
+        $episode->increment('views_count');
+        $episode->video_url = url('/videos/' . $episode->video_filename);
+        $episode->audio_url = url('/audios/' . $episode->audio_filename);
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $episode->fresh(), // refresh to show updated count
-            ]);
+        return response()->json([
+            'status' => 'success',
+            'data' => $episode->fresh(),
+        ]);
 
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
+    } catch (ModelNotFoundException $e) {
+        return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
+    } catch (Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
+}
 
     public function store(Request $request, CreateEpisodeAction $action)
     {
