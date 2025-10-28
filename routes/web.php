@@ -56,4 +56,4 @@ Route::get('/forms', function () {
     return view('forms');
 })->middleware(['auth', 'verified'])->name('forms');
 
-Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'generateRss']);
+Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'generateRss'])->name('podcast.rss');
