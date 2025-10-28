@@ -24,26 +24,32 @@ class DocVideoController extends Controller
         $this->repo = $repo;
     }
 
-    public function index(Request $request)
-    {
-        $limit = $request->query('limit', 10);
-        $page = $request->query('page', 1);
-        $offset = ($page - 1) * $limit;
+   public function index(Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
 
-        $doc_videos = $this->repo->all($limit, $offset);
-        $total = $this->repo->count();
+    // Fetch videos + their category name
+    $doc_videos = DocVideoModel::with('category:id,name')
+        ->offset($offset)
+        ->limit($limit)
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        return response()->json([
-            'data' => $doc_videos,
-            'pagination' => [
-                'current_page' => (int) $page,
-                'per_page' => (int) $limit,
-                'total' => $total,
-                'last_page' => ceil($total / $limit),
-            ],
-        ]);
-    }
+    // Total count (for pagination)
+    $total = DocVideoModel::count();
 
+    return response()->json([
+        'data' => $doc_videos,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $total,
+            'last_page' => ceil($total / $limit),
+        ],
+    ]);
+}
     public function show($id, ShowDocVideoAction $showAction)
     {
         $doc_video = $showAction->execute($id);
