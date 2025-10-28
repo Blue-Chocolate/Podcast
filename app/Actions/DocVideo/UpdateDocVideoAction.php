@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Actions\Doc_Videos;
+namespace App\Actions\DocVideo;
 
 use App\Repositories\DocVideoRepository;
-use App\Models\doc_videos;
+use App\Models\DocVideo;
 
 class UpdateDocVideoAction
 {
@@ -14,7 +14,7 @@ class UpdateDocVideoAction
         $this->repo = $repo;
     }
 
-    public function execute(doc_videos $doc_video, array $data)
+    public function execute(DocVideo $doc_video, array $data)
     {
         return $this->repo->update($doc_video, $data);
     }

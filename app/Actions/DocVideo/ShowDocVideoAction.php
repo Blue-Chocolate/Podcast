@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Doc_Videos;
+namespace App\Actions\DocVideo;
 
 use App\Repositories\DocVideoRepository;
 

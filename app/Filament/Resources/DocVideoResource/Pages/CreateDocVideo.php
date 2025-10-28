@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\DocVideoResource\Pages;
 
 use App\Filament\Resources\DocVideoResource;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\CreateRecord;
 
-class EditDocVideo extends EditRecord
+class CreateDocVideo extends CreateRecord
 {
     protected static string $resource = DocVideoResource::class;
+
+    protected static ?string $title = 'إضافة فيديو جديد';
 }

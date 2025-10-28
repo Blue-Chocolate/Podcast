@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Actions\Doc_Videos;
+namespace App\Actions\DocVideo;
 
 use App\Repositories\DocVideoRepository;
-use App\Models\doc_videos;
 
-class DeleteDocVideoAction
+class CreateDocVideoAction
 {
     protected $repo;
 
@@ -14,8 +13,8 @@ class DeleteDocVideoAction
         $this->repo = $repo;
     }
 
-    public function execute(doc_videos $doc_video)
+    public function execute(array $data)
     {
-        return $this->repo->delete($doc_video);
+        return $this->repo->create($data);
     }
 }

@@ -49,16 +49,13 @@ Route::get('podcasts', [PodcastController::class, 'index']);
 Route::get('podcasts/{id}', [PodcastController::class, 'show']);
 
 
+
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
-
-
-// Categories
 Route::get('blogs/categories', [BlogController::class, 'categories']);
 Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
 
-
-
+Route::apiResource('categories', CategoryController::class);
 
 Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
 Route::get('/releases/{id}', [\App\Http\Controllers\Api\ReleaseController\ReleaseController::class, 'show']);

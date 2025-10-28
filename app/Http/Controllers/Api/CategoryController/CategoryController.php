@@ -14,6 +14,7 @@ use App\Actions\Categories\DeleteCategoryAction;
 use App\Actions\Categories\GetAllCategoriesAction;
 use App\Actions\Categories\GetCategoryByIdAction;
 
+
 class CategoryController extends Controller
 {
     protected $createCategory;

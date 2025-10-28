@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api\Doc_Videos;
+namespace App\Http\Controllers\Api\DocVideoController;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Actions\Doc_Videos\{
+use App\Actions\DocVideo\{
     CreateDocVideoAction,
     UpdateDocVideoAction,
     ShowDocVideoAction,
     DeleteDocVideoAction
 };
-use App\Models\doc_videos as DocVideoModel;
+use App\Models\DocVideo as DocVideoModel;
 
 use App\Repositories\DocVideoRepository;
 
-class Doc_Videos extends Controller
+class DocVideoController extends Controller
 
 {
     protected $repo;
