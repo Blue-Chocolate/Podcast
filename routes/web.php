@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\Api\PodcastRssController\PodcastRssController;
+use App\Http\Controllers\Api\EpisodeController\EpisodeController;
+
 
 Route::get('/videos/{file}', function ($file) {
     $path = base_path('public/storage/videos/' . $file);
@@ -57,3 +59,7 @@ Route::get('/forms', function () {
 })->middleware(['auth', 'verified'])->name('forms');
 
 Route::get('/podcast/{slug}/rss', [PodcastRssController::class, 'generateRss'])->name('podcast.rss');
+
+Route::get('episodes', [EpisodeController::class, 'index']);
+Route::get('episodes/{id}', [EpisodeController::class, 'show']);
+
