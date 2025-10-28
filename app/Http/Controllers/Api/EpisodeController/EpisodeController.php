@@ -33,26 +33,49 @@ class EpisodeController extends Controller
         }
     }
 
-    public function show($id, ShowEpisodeAction $action)
+public function show($slug, ShowEpisodeAction $action)
 {
     try {
-        $episode = $action->execute($id);
+        // ✅ Fetch episode by slug instead of ID
+        $episode = Episode::where('slug', $slug)->firstOrFail();
 
+        // ✅ Increment views safely
         $episode->increment('views_count');
-        $episode->video_url = url('/videos/' . $episode->video_filename);
-        $episode->audio_url = url('/audios/' . $episode->audio_filename);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $episode->fresh(),
-        ]);
+        // ✅ Ensure URLs are full paths and not broken
+        $episode->video_url = $episode->video_filename 
+            ? url('videos/' . $episode->video_filename) 
+            : null;
+
+        $episode->audio_url = $episode->audio_filename 
+            ? url('audios/' . $episode->audio_filename) 
+            : null;
+
+        // ✅ Return JSON if API request (like /api/episodes/{slug})
+        if (request()->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $episode->fresh(), // refresh to show updated count
+            ]);
+        }
+
+        // ✅ Otherwise return Blade view
+        return view('episodes.show', compact('episode'));
 
     } catch (ModelNotFoundException $e) {
-        return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
+        }
+        abort(404, 'Episode not found');
     } catch (Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+        return redirect()->back()->withErrors(['error' => $e->getMessage()]);
     }
 }
+
+
 
     public function store(Request $request, CreateEpisodeAction $action)
     {

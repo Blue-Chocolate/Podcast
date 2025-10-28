@@ -3,17 +3,22 @@
 namespace App\Repositories;
 
 use App\Models\Blog;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BlogRepository
 {
     public function all()
     {
-        return Blog::with('user')->latest()->get();
+        return Blog::with('user', 'category')->latest()->get();
     }
 
     public function find($id)
     {
-        return Blog::with('user')->findOrFail($id);
+        $blog = Blog::with('user', 'category')->find($id);
+        if (!$blog) {
+            throw new ModelNotFoundException('Blog not found');
+        }
+        return $blog;
     }
 
     public function create(array $data)

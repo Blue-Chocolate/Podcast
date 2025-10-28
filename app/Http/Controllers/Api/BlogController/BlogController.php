@@ -13,13 +13,14 @@ use App\Actions\Blogs\{
     ListBlogsAction
 };
 use App\Models\Blog;
+use App\Models\Category;
 
 class BlogController extends Controller
 {
     public function index(ListBlogsAction $action, Request $request)
     {
-        $limit = $request->query('limit', 10); // Default = 10
-        $page = $request->query('page', 1);    // Default = 1
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
         $offset = ($page - 1) * $limit;
 
         $blogs = Blog::offset($offset)
@@ -55,7 +56,7 @@ class BlogController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
             'content' => 'required|string',
-            'category' => 'nullable|string|max:100',
+            'category_id' => 'nullable|exists:categories,id', // تعديل هنا
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
             'announcement' => 'nullable|string|max:255',
@@ -84,7 +85,7 @@ class BlogController extends Controller
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
             'content' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
+            'category_id' => 'nullable|exists:categories,id', // تعديل هنا
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
             'announcement' => 'nullable|string|max:255',
@@ -110,5 +111,47 @@ class BlogController extends Controller
         $action->execute($blog);
 
         return response()->json(['message' => 'Blog deleted successfully']);
+    }
+
+    // ✅ List all categories
+    public function categories()
+    {
+        $categories = Category::select('id', 'name', 'slug')->get(); // تعديل هنا
+
+        return response()->json([
+            'categories' => $categories
+        ]);
+    }
+
+    // ✅ List blogs by category_id
+    public function categoryBlogs(Request $request, $category_id)
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
+
+        $category = Category::findOrFail($category_id);
+
+        $query = Blog::where('category_id', $category_id);
+
+        $total = $query->count();
+        $blogs = $query->offset($offset)
+            ->limit($limit)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name
+            ],
+            'data' => $blogs,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $total,
+                'last_page' => ceil($total / $limit),
+            ],
+        ]);
     }
 }

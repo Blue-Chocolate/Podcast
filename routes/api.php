@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 use App\Http\Controllers\Api\NewsController\NewsController;
 use App\Http\Controllers\Api\SearchController\SearchController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Doc_Videos\Doc_Videos;
 
 
 
@@ -46,11 +47,30 @@ Route::get('episodes/{id}', [EpisodeController::class, 'show']);
 // 🎙️ Public podcast routes
 Route::get('podcasts', [PodcastController::class, 'index']);
 Route::get('podcasts/{id}', [PodcastController::class, 'show']);
+
+
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
 
+
+// Categories
+Route::get('blogs/categories', [BlogController::class, 'categories']);
+Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
+
+
+
+
 Route::get('releases/{id}/download', [ReleaseController::class, 'download']);
 Route::get('/releases/{id}', [\App\Http\Controllers\Api\ReleaseController\ReleaseController::class, 'show']);
+
+
+Route::prefix('doc_videos')->group(function () {
+
+    // ✅ List all doc_videos with pagination
+    Route::get('/', [Doc_Videos::class, 'index']);
+
+    // ✅ Show a specific doc_video
+    Route::get('/{id}', [Doc_Videos::class, 'show']); });
 
 
 // 🎵 Audio files route - لازم يبقى في الآخر

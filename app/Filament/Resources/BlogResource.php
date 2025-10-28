@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
 use App\Models\User;
+use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -65,10 +66,12 @@ class BlogResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('category')
+                // ✅ Relationship with Category
+                Forms\Components\Select::make('category_id')
                     ->label('التصنيف')
-                    ->maxLength(100)
-                    ->default(null),
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->required(),
 
                 Forms\Components\Select::make('status')
                     ->label('الحالة')
@@ -92,12 +95,12 @@ class BlogResource extends Resource
                     ->label('الصورة')
                     ->image()
                     ->directory('blogs'),
+
                 Forms\Components\TextInput::make('footer')
                     ->label('تذييل')
                     ->maxLength(255)
                     ->default(null),
             ]);
-
     }
 
     public static function table(Table $table): Table
@@ -117,9 +120,11 @@ class BlogResource extends Resource
                     ->label('الإعلان')
                     ->limit(30),
 
-                Tables\Columns\TextColumn::make('category')
+                // ✅ Show category name
+                Tables\Columns\TextColumn::make('category.name')
                     ->label('التصنيف')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('الحالة')

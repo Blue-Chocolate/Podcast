@@ -15,4 +15,9 @@ class Category extends Model
     {
         return $this->belongsToMany(Episode::class, 'episode_categories');
     }
+    public function blogs()
+{
+    return $this->hasMany(Blog::class);
+}
+
 }

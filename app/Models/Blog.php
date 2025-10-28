@@ -103,4 +103,8 @@ class Blog extends Model
             Cache::forget('blogs:published:with-user');
         }
     }
+    public function category()
+{
+    return $this->belongsTo(Category::class);
+}
 }

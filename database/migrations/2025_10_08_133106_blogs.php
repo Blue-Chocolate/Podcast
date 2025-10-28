@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('description')->nullable();
             $table->text('content');
-            $table->string('category', 100)->nullable();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->dateTime('publish_date')->nullable();
             $table->integer('views')->default(0);

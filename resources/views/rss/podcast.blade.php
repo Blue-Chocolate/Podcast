@@ -22,7 +22,7 @@
       <itunes:email>{{ $podcast->owner_email ?? config('mail.from.address') }}</itunes:email>
     </itunes:owner>
 
-    <itunes:explicit>{{ $podcast->explicit ? 'yes' : 'no' }}</itunes:explicit>
+    <itunes:explicit>{{ $podcast->explicit ? 'true' : 'false' }}</itunes:explicit>
     <itunes:category text="{{ $podcast->category ?? 'Technology' }}" />
 
     @if($podcast->cover_image)
@@ -76,4 +76,31 @@
         @if($enclosureUrl)
           <enclosure 
             url="{{ $enclosureUrl }}"
-            length="{
+            length="{{ $enclosureLength }}"
+            type="{{ $enclosureType }}" />
+        @endif
+
+        <guid isPermaLink="true">https://haqqeq.com/episodes/{{ $episode->slug ?? $episode->id }}</guid>
+        <link>https://haqqeq.com/episodes/{{ $episode->slug ?? $episode->id }}</link>
+        <pubDate>{{ $episode->published_at ? $episode->published_at->format('D, d M Y H:i:s O') : now()->format('D, d M Y H:i:s O') }}</pubDate>
+
+        <itunes:title>{{ $episode->title }}</itunes:title>
+        <itunes:episodeType>{{ $episode->episode_type ?? 'full' }}</itunes:episodeType>
+        @if(isset($episode->episode_number))
+          <itunes:episode>{{ $episode->episode_number }}</itunes:episode>
+        @endif
+        @if(isset($episode->season_number))
+          <itunes:season>{{ $episode->season_number }}</itunes:season>
+        @endif
+        @if(isset($episode->duration))
+          <itunes:duration>{{ $episode->duration }}</itunes:duration>
+        @endif
+        <itunes:explicit>{{ $episode->explicit ?? $podcast->explicit ? 'true' : 'false' }}</itunes:explicit>
+
+        @if($episodeCover)
+          <itunes:image href="{{ $episodeCover }}" />
+        @endif
+      </item>
+    @endforeach
+  </channel>
+</rss>
