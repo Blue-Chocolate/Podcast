@@ -18,6 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Facades\Filament;
+use Closure;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -53,10 +54,21 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                
+                fn ($request, Closure $next) => $this->authorizeFilamentAccess($request, $next),
             ])
             ->navigationGroups([]);
-            // ->databaseNotifications();
+    }
+
+    protected function authorizeFilamentAccess($request, Closure $next)
+    {
+        $user = auth()->user();
+
+        // لو المستخدم مش داخل أو مش أدمن
+        if (! $user || $user->role !== 'admin') {
+            abort(403, 'You are not authorized to access this area.');
+        }
+
+        return $next($request);
     }
 
     public function boot(): void
