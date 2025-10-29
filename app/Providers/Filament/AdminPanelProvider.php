@@ -54,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                fn ($request, Closure $next) => $this->authorizeFilamentAccess($request, $next),
+               \App\Http\Middleware\EnsureUserIsAdmin::class,
             ])
             ->navigationGroups([]);
     }
