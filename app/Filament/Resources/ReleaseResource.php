@@ -46,7 +46,7 @@ class ReleaseResource extends Resource
                 Forms\Components\FileUpload::make('file_path')
                     ->label('ملف PDF')
                     ->disk('public')
-                    ->directory('releases/files')
+                    ->directory('files')
                     ->acceptedFileTypes(['application/pdf'])
                     ->maxSize(10240)
                     ->required()

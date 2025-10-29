@@ -17,6 +17,13 @@ return [
     'visibility' => 'public',
 ],
 
+'public_files' => [
+    'driver' => 'local',
+    'root' => public_path('files'),
+    'url' => env('APP_URL').'/files',
+    'visibility' => 'public',
+],
+
 
         'livewire-tmp' => [
             'driver' => 'local',
