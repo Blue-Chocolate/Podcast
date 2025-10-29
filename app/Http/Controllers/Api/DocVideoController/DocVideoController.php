@@ -28,29 +28,28 @@ class DocVideoController extends Controller
      * with their videos included.
      */
     public function index(Request $request)
-    {
-        $limit = $request->query('limit', 10);
-        $page = $request->query('page', 1);
-        $offset = ($page - 1) * $limit;
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
 
-        // Get categories that have videos
-        $categories = Category::whereHas('docVideos')
-            ->with(['docVideos' => function ($query) use ($offset, $limit) {
-                $query->select('id', 'title', 'category_id')
-                      ->orderBy('created_at', 'desc');
-            }])
-            ->select('id', 'name')
-            ->get();
+    // Fetch categories that have at least one video
+    $categories = Category::whereHas('docVideos')
+        ->with(['docVideos' => function ($query) {
+            $query->select('id', 'title', 'description', 'category_id', 'video_path', 'image_path', 'created_at');
+        }])
+        ->select('id', 'name')
+        ->get();
 
-        if ($categories->isEmpty()) {
-            return response()->json(['message' => 'No categories with videos found'], 404);
-        }
-
-        return response()->json([
-            'data' => $categories,
-            'message' => 'Categories with videos retrieved successfully'
-        ]);
+    if ($categories->isEmpty()) {
+        return response()->json(['message' => 'No categories with videos found'], 404);
     }
+
+    return response()->json([
+        'data' => $categories,
+        'message' => 'Categories with videos retrieved successfully'
+    ]);
+}
 
     public function show($id, ShowDocVideoAction $showAction)
     {

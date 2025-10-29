@@ -21,7 +21,7 @@ public function blogs()
 }
 public function docVideos()
 {
-    return $this->hasMany(\App\Models\DocVideo::class, 'category_id');
+    return $this->hasMany(DocVideo::class, 'category_id');
 }
 
 }
