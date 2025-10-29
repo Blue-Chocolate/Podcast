@@ -111,4 +111,35 @@ class DocVideoController extends Controller
 
         return response()->json(['message' => 'Doc video deleted successfully']);
     }
+    public function getByCategory($id, Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
+
+    // Fetch videos for the given category id
+    $videos = \App\Models\DocVideo::where('category_id', $id)
+        ->with('category:id,name')
+        ->offset($offset)
+        ->limit($limit)
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    // Total count for pagination
+    $total = \App\Models\DocVideo::where('category_id', $id)->count();
+
+    if ($videos->isEmpty()) {
+        return response()->json(['message' => 'No videos found for this category'], 404);
+    }
+
+    return response()->json([
+        'data' => $videos,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $total,
+            'last_page' => ceil($total / $limit),
+        ],
+    ]);
+}
 }

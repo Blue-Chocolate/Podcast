@@ -56,12 +56,19 @@ Route::get('categories/blogs', [BlogController::class, 'categoriesWithBlogs']);
 Route::get('categories/blogs/ids', [BlogController::class, 'categoriesWithBlogsWithIds']);
 Route::get('categories/blogs/{id}', [BlogController::class, 'categoryWithBlogsById']);
 
+
+
 Route::apiResource('categories', CategoryController::class);
 
 // 🎬 Doc videos
+
 Route::prefix('doc_videos')->group(function () {
     Route::get('/', [DocVideoController::class, 'index']);
     Route::get('/{id}', [DocVideoController::class, 'show']);
+
+    // New routes
+    Route::get('/categories', [CategoryController::class, 'index']); // all categories
+    Route::get('/categories/{id}', [DocVideoController::class, 'getByCategory']); // videos by category
 });
 
 // ==================================================
