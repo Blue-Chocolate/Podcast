@@ -69,6 +69,7 @@ Route::prefix('doc_videos')->group(function () {
     // New routes
     Route::get('/categories', [CategoryController::class, 'index']); // all categories
     Route::get('/categories/{id}', [DocVideoController::class, 'getByCategory']); // videos by category
+    Route::get('/{category_id}/{video_id}', [DocVideoController::class, 'showInCategory']);
 });
 
 // ==================================================

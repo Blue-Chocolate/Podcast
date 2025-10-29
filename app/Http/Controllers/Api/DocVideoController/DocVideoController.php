@@ -142,4 +142,24 @@ class DocVideoController extends Controller
         ],
     ]);
 }
+
+public function showInCategory($category_id, $video_id)
+{
+    $doc_video = \App\Models\DocVideo::with('category:id,name')
+        ->where('category_id', $category_id)
+        ->where('id', $video_id)
+        ->first();
+
+    if (!$doc_video) {
+        return response()->json(['error' => 'Video not found in this category'], 404);
+    }
+
+    // Increment views count
+    $doc_video->increment('views_count');
+
+    return response()->json([
+        'message' => 'Video retrieved successfully',
+        'data' => $doc_video
+    ]);
+}
 }
