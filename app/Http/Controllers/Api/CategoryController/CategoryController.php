@@ -41,18 +41,15 @@ class CategoryController extends Controller
      * Display a listing of the categories.
      */
     public function index(Request $request)
-    {   
+{
+    try {
         $limit = $request->query('limit', 10);
         $categories = \App\Models\Category::paginate($limit);
-
         return response()->json($categories);
-        try {
-            $categories = $this->getAllCategories->execute();
-            return response()->json($categories);
-        } catch (Exception $e) {
-            return response()->json(['error' => 'Failed to fetch categories', 'message' => $e->getMessage()], 500);
-        }
+    } catch (Exception $e) {
+        return response()->json(['error' => 'Failed to fetch categories', 'message' => $e->getMessage()], 500);
     }
+}
 
     /**
      * Store a newly created category.

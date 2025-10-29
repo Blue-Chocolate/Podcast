@@ -11,11 +11,10 @@ use App\Actions\DocVideo\{
     DeleteDocVideoAction
 };
 use App\Models\DocVideo as DocVideoModel;
-
+use App\Models\Category;
 use App\Repositories\DocVideoRepository;
 
 class DocVideoController extends Controller
-
 {
     protected $repo;
 
@@ -24,32 +23,35 @@ class DocVideoController extends Controller
         $this->repo = $repo;
     }
 
-   public function index(Request $request)
-{
-    $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
+    /**
+     * Fetch all categories that have at least one doc video,
+     * with their videos included.
+     */
+    public function index(Request $request)
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
 
-    // Fetch videos + their category name
-    $doc_videos = DocVideoModel::with('category:id,name')
-        ->offset($offset)
-        ->limit($limit)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        // Get categories that have videos
+        $categories = Category::whereHas('docVideos')
+            ->with(['docVideos' => function ($query) use ($offset, $limit) {
+                $query->select('id', 'title', 'category_id')
+                      ->orderBy('created_at', 'desc');
+            }])
+            ->select('id', 'name')
+            ->get();
 
-    // Total count (for pagination)
-    $total = DocVideoModel::count();
+        if ($categories->isEmpty()) {
+            return response()->json(['message' => 'No categories with videos found'], 404);
+        }
 
-    return response()->json([
-        'data' => $doc_videos,
-        'pagination' => [
-            'current_page' => (int) $page,
-            'per_page' => (int) $limit,
-            'total' => $total,
-            'last_page' => ceil($total / $limit),
-        ],
-    ]);
-}
+        return response()->json([
+            'data' => $categories,
+            'message' => 'Categories with videos retrieved successfully'
+        ]);
+    }
+
     public function show($id, ShowDocVideoAction $showAction)
     {
         $doc_video = $showAction->execute($id);
@@ -111,55 +113,53 @@ class DocVideoController extends Controller
 
         return response()->json(['message' => 'Doc video deleted successfully']);
     }
+
     public function getByCategory($id, Request $request)
-{
-    $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
 
-    // Fetch videos for the given category id
-    $videos = \App\Models\DocVideo::where('category_id', $id)
-        ->with('category:id,name')
-        ->offset($offset)
-        ->limit($limit)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $videos = DocVideoModel::where('category_id', $id)
+            ->with('category:id,name')
+            ->offset($offset)
+            ->limit($limit)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // Total count for pagination
-    $total = \App\Models\DocVideo::where('category_id', $id)->count();
+        $total = DocVideoModel::where('category_id', $id)->count();
 
-    if ($videos->isEmpty()) {
-        return response()->json(['message' => 'No videos found for this category'], 404);
+        if ($videos->isEmpty()) {
+            return response()->json(['message' => 'No videos found for this category'], 404);
+        }
+
+        return response()->json([
+            'data' => $videos,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $total,
+                'last_page' => ceil($total / $limit),
+            ],
+        ]);
     }
 
-    return response()->json([
-        'data' => $videos,
-        'pagination' => [
-            'current_page' => (int) $page,
-            'per_page' => (int) $limit,
-            'total' => $total,
-            'last_page' => ceil($total / $limit),
-        ],
-    ]);
-}
+    public function showInCategory($category_id, $video_id)
+    {
+        $doc_video = DocVideoModel::with('category:id,name')
+            ->where('category_id', $category_id)
+            ->where('id', $video_id)
+            ->first();
 
-public function showInCategory($category_id, $video_id)
-{
-    $doc_video = \App\Models\DocVideo::with('category:id,name')
-        ->where('category_id', $category_id)
-        ->where('id', $video_id)
-        ->first();
+        if (!$doc_video) {
+            return response()->json(['error' => 'Video not found in this category'], 404);
+        }
 
-    if (!$doc_video) {
-        return response()->json(['error' => 'Video not found in this category'], 404);
+        $doc_video->increment('views_count');
+
+        return response()->json([
+            'message' => 'Video retrieved successfully',
+            'data' => $doc_video
+        ]);
     }
-
-    // Increment views count
-    $doc_video->increment('views_count');
-
-    return response()->json([
-        'message' => 'Video retrieved successfully',
-        'data' => $doc_video
-    ]);
-}
 }

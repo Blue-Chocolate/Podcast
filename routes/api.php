@@ -62,15 +62,15 @@ Route::apiResource('categories', CategoryController::class);
 
 // 🎬 Doc videos
 
-Route::prefix('doc_videos')->group(function () {
-    Route::get('/', [DocVideoController::class, 'index']);
-    Route::get('/{id}', [DocVideoController::class, 'show']);
 
-    // New routes
-    Route::get('/categories', [CategoryController::class, 'index']); // all categories
-    Route::get('/categories/{id}', [DocVideoController::class, 'getByCategory']); // videos by category
-    Route::get('/{category_id}/{video_id}', [DocVideoController::class, 'showInCategory']);
-});
+// 🎬 Doc Videos Routes
+Route::get('docvideos', [DocVideoController::class, 'index']); // كل الفيديوهات
+Route::get('docvideos/{id}', [DocVideoController::class, 'show']); // فيديو محدد
+
+// 🎞️ Categories + DocVideos (بنفس منطق blogs)
+Route::get('categories/docvideos', [DocVideoController::class, 'index']); // كل الكاتيجوريات اللي فيها فيديوهات
+Route::get('categories/docvideos/{category_id}', [DocVideoController::class, 'getByCategory']); // كل الفيديوهات داخل كاتيجوري
+Route::get('categories/docvideos/{category_id}/{video_id}', [DocVideoController::class, 'showInCategory']); // فيديو محدد داخل كاتيجوري
 
 // ==================================================
 // 📁 FILE SERVING ROUTES (with CORS support)
