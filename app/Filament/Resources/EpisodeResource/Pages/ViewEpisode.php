@@ -36,10 +36,10 @@ class ViewEpisode extends ViewRecord
                         Infolists\Components\TextEntry::make('video_url')
                             ->label('Video URL')
                             ->formatStateUsing(fn ($state, $record) => 
-                                $record->video_url_full ?? asset('storage/episodes/' . $state)
+                                $record->video_url_full ?? asset('/' . $state)
                             )
                             ->url(fn ($state, $record) => 
-                                $record->video_url_full ?? asset('storage/episodes/' . $state), 
+                                $record->video_url_full ?? asset('/' . $state), 
                                 shouldOpenInNewTab: true
                             )
                             ->copyable()

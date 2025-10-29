@@ -178,4 +178,93 @@ class BlogController extends Controller
             ],
         ]);
     }
+    public function categoriesWithBlogs(Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
+
+    $query = Category::whereHas('blogs') // only categories with blogs
+        ->withCount('blogs');
+
+    $total = $query->count();
+
+    $categories = $query->offset($offset)
+        ->limit($limit)
+        ->get(['id', 'name', 'slug']);
+
+    return response()->json([
+        'data' => $categories,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $total,
+            'last_page' => ceil($total / $limit),
+        ]
+    ]);
+}
+ public function categoriesWithBlogsWithIds(Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
+
+    $categoryIds = $request->query('ids', []);
+
+    $query = Category::whereIn('id', $categoryIds)
+        ->whereHas('blogs')
+        ->withCount('blogs');
+
+    $total = $query->count();
+
+    $categories = $query->offset($offset)
+        ->limit($limit)
+        ->get(['id', 'name', 'slug']);
+
+    return response()->json([
+        'data' => $categories,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $total,
+            'last_page' => ceil($total / $limit),
+        ]
+    ]);
+}
+
+
+public function categoryWithBlogsById($id, Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
+
+    $category = Category::where('id', $id)
+        ->whereHas('blogs')
+        ->with(['blogs' => function($query) use ($limit, $offset) {
+            $query->offset($offset)->limit($limit)->orderBy('created_at', 'desc');
+        }])
+        ->first();
+
+    if (!$category) {
+        return response()->json(['error' => 'Category not found or has no blogs'], 404);
+    }
+
+    $totalBlogs = $category->blogs()->count();
+
+    return response()->json([
+        'category' => [
+            'id' => $category->id,
+            'name' => $category->name,
+            'slug' => $category->slug,
+        ],
+        'blogs' => $category->blogs,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $totalBlogs,
+            'last_page' => ceil($totalBlogs / $limit),
+        ]
+    ]);
+}
 }

@@ -42,32 +42,28 @@ class ReleaseController extends Controller
 }
    public function index(Request $request)
 {
-    // Optional limit parameter (default = 10)
     $limit = $request->query('limit', 10);
 
     $releases = Release::select('id', 'title', 'description', 'images', 'file_path', 'excel_path', 'powerbi_path', 'created_at')
         ->orderBy('created_at', 'desc')
-        ->limit($limit)
-        ->get()
-        ->map(function ($release) {
-            // Decode images JSON (if stored as string)
-            $images = is_string($release->images)
-                ? json_decode($release->images, true)
-                : $release->images;
+        ->paginate($limit);
 
-            return [
-                'id' => $release->id,
-                'title' => $release->title,
-                'description' => $release->description,
-                'images' => collect($images ?? [])
-                    ->map(fn($img) => asset('storage/' . $img))
-                    ->toArray(),
-                'file_url' => $release->file_path ? asset('storage/' . $release->file_path) : null,
-                'excel_url' => $release->excel_path ? asset('storage/' . $release->excel_path) : null,
-                'powerbi_url' => $release->powerbi_path ? asset('storage/' . $release->powerbi_path) : null,
-                'created_at' => $release->created_at,
-            ];
-        });
+    $releases->getCollection()->transform(function ($release) {
+        $images = is_string($release->images)
+            ? json_decode($release->images, true)
+            : $release->images;
+
+        return [
+            'id' => $release->id,
+            'title' => $release->title,
+            'description' => $release->description,
+            'images' => collect($images)->map(fn($img) => asset($img))->toArray(),
+            'file_url' => $release->file_path ? asset($release->file_path) : null,
+            'excel_url' => $release->excel_path ? asset($release->excel_path) : null,
+            'powerbi_url' => $release->powerbi_path ? asset($release->powerbi_path) : null,
+            'created_at' => $release->created_at,
+        ];
+    });
 
     return response()->json($releases);
 }

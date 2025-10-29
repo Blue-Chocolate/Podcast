@@ -52,6 +52,10 @@ Route::get('blogs/{id}', [BlogController::class, 'show']);
 Route::get('blogs/categories', [BlogController::class, 'categories']);
 Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
 
+Route::get('categories/blogs', [BlogController::class, 'categoriesWithBlogs']);
+Route::get('categories/blogs/ids', [BlogController::class, 'categoriesWithBlogsWithIds']);
+Route::get('categories/blogs/{id}', [BlogController::class, 'categoryWithBlogsById']);
+
 Route::apiResource('categories', CategoryController::class);
 
 // 🎬 Doc videos

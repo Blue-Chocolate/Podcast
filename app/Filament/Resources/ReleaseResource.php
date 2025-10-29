@@ -43,15 +43,15 @@ class ReleaseResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
-                Forms\Components\FileUpload::make('file_path')
-                    ->label('ملف PDF')
-                    ->disk('public')
-                    ->directory('files')
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(10240)
-                    ->required()
-                    ->downloadable()
-                    ->openable(),
+               Forms\Components\FileUpload::make('file_path')
+    ->label('ملف PDF')
+    ->disk('public')
+    ->directory('files')
+    ->acceptedFileTypes(['application/pdf'])
+    ->maxSize(10240)
+    ->required()
+    ->openable()
+    ->downloadable(),
 
                 Forms\Components\FileUpload::make('images')
                     ->label('صور الغلاف')
