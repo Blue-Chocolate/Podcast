@@ -39,6 +39,8 @@ Route::get('/releases/{id}', [ReleaseController::class, 'show']);
 
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 Route::post('submissions', [SubmissionController::class, 'store']);
+
+
 Route::get('episodes', [EpisodeController::class, 'index']);
 Route::get('episodes/{id}', [EpisodeController::class, 'show']);
 
@@ -65,7 +67,7 @@ Route::get('categories/docvideos/{category_id}', [DocVideoController::class, 'ge
 
 // 🎬 Doc Videos Routes (individual videos)
 Route::get('docvideos/{id}', [DocVideoController::class, 'show']); // فيديو محدد
-Route::get('docvideos', [DocVideoController::class, 'index']); // كل الفيديوهات
+Route::get('docvideos/list', [DocVideoController::class, 'videosList']);
 
 // ==================================================
 // 📁 FILE SERVING ROUTES (with CORS support)
@@ -170,9 +172,7 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::delete('podcasts/{id}', [PodcastController::class, 'destroy']);
 
         // Episodes
-        Route::post('episodes', [EpisodeController::class, 'store']);
-        Route::put('episodes/{id}', [EpisodeController::class, 'update']);
-        Route::delete('episodes/{id}', [EpisodeController::class, 'destroy']);
+     
 
         // Episode Files
         Route::get('episode-files', [EpisodeFileController::class, 'index']);

@@ -27,25 +27,27 @@ class DocVideoController extends Controller
      * Fetch all categories that have at least one doc video,
      * with their videos included.
      */
-    public function index(Request $request)
+   public function index(Request $request)
 {
     $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
 
-    // Fetch categories that have at least one video
+    // ✅ Fetch only categories that exist in doc_videos table
     $categories = Category::whereHas('docVideos')
         ->with(['docVideos' => function ($query) {
-            $query->select('id', 'title', 'description', 'category_id', 'video_path', 'image_path', 'created_at');
+            $query->select('id', 'title', 'description', 'category_id',  'image_path', 'created_at');
         }])
         ->select('id', 'name')
-        ->get();
+        ->paginate($limit);
 
     if ($categories->isEmpty()) {
-        return response()->json(['message' => 'No categories with videos found'], 404);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No categories with videos found'
+        ], 404);
     }
 
     return response()->json([
+        'status' => 'success',
         'data' => $categories,
         'message' => 'Categories with videos retrieved successfully'
     ]);
@@ -161,4 +163,36 @@ class DocVideoController extends Controller
             'data' => $doc_video
         ]);
     }
+    public function videosList(Request $request)
+{
+    $limit = $request->query('limit', 10);
+
+    $videos = \App\Models\DocVideo::leftJoin('categories', 'doc_videos.category_id', '=', 'categories.id')
+        ->select(
+            'doc_videos.id',
+            'doc_videos.title',
+            'doc_videos.description',
+            'doc_videos.video_path',
+            'doc_videos.image_path',
+            'doc_videos.created_at',
+            'doc_videos.category_id',
+            'categories.name as category_name'
+        )
+        ->orderBy('doc_videos.created_at', 'desc')
+        ->paginate($limit);
+
+    if ($videos->isEmpty()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No videos found'
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $videos,
+        'message' => 'Videos retrieved successfully'
+    ]);
+}
+
 }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 
 class SearchController extends Controller
 {
@@ -21,50 +22,63 @@ class SearchController extends Controller
             ], 400);
         }
 
-        // 🔹 Keywords
         $keywords = array_filter(explode(' ', $query));
-
-        // 🔹 Get all tables in DB
-        $tables = DB::select('SHOW TABLES');
         $dbName = DB::getDatabaseName();
-        $key = "Tables_in_{$dbName}";
+        $tables = DB::select("SHOW TABLES");
+        $tableKey = "Tables_in_{$dbName}";
         $results = [];
 
         foreach ($tables as $tableObj) {
-            $table = $tableObj->$key;
+            $table = $tableObj->$tableKey;
 
-            // ⏭️ Skip migration or cache tables
-            if (Str::contains($table, ['migrations', 'password', 'cache', 'jobs'])) continue;
+            // Skip irrelevant or system tables
+            if (Str::contains($table, ['migrations', 'cache', 'jobs', 'failed_jobs', 'personal_access_tokens'])) {
+                continue;
+            }
 
-            // 🔍 Get string-like columns only
-            $columns = collect(Schema::getColumnListing($table))
-                ->filter(fn($col) => !Str::contains($col, ['id', 'created_at', 'updated_at', 'deleted_at']));
+            try {
+                $columns = Schema::getColumnListing($table);
 
-            if ($columns->isEmpty()) continue;
+                if (empty($columns)) {
+                    continue;
+                }
 
-            // 🔹 Build the query
-            $results[$table] = DB::table($table)
-                ->where(function ($q) use ($columns, $keywords) {
+                // Build flexible query for all columns
+                $queryBuilder = DB::table($table);
+
+                $queryBuilder->where(function ($outerQuery) use ($columns, $keywords) {
                     foreach ($keywords as $keyword) {
-                        $q->where(function ($subQuery) use ($columns, $keyword) {
+                        $outerQuery->where(function ($subQuery) use ($columns, $keyword) {
                             foreach ($columns as $column) {
                                 $subQuery->orWhere($column, 'LIKE', "%{$keyword}%");
                             }
                         });
                     }
-                })
-                ->limit(10) // safety limit for performance
-                ->get();
-        }
+                });
 
-        $filteredResults = collect($results)->filter(fn($r) => $r->count() > 0);
+                $rows = $queryBuilder->limit(15)->get();
+
+                if ($rows->count() > 0) {
+                    $results[$table] = [
+                        'count' => $rows->count(),
+                        'data' => $rows
+                    ];
+                }
+            } catch (QueryException $e) {
+                // Skip problematic tables gracefully
+                continue;
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
 
         return response()->json([
             'success' => true,
             'query' => $query,
-            'empty' => $filteredResults->isEmpty(),
-            'total_results' => $filteredResults->sum(fn($r) => $r->count()),
-            'results' => $filteredResults,
+            'total_tables_scanned' => count($tables),
+            'matched_tables' => count($results),
+            'total_results' => collect($results)->sum(fn($r) => $r['count']),
+            'results' => $results,
         ]);
     }
 }

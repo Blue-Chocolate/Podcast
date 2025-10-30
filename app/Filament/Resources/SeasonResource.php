@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SeasonResource\Pages;
-use App\Filament\Resources\SeasonResource\RelationManagers\EpisodesRelationManager;
+use App\Filament\Resources\RelationManagers\EpisodesRelationManager;
 use App\Models\Season;
 use Filament\Forms;
 use Filament\Forms\Form;
