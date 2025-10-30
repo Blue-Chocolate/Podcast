@@ -82,7 +82,7 @@ class CategoryController extends Controller
             $category = $this->getCategoryById->execute($id);
             return response()->json($category);
         } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Category not found'], 404);
+            return response()->json(['error' => 'Category nottt found'], 404);
         } catch (Exception $e) {
             return response()->json(['error' => 'Failed to fetch category', 'message' => $e->getMessage()], 500);
         }

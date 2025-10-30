@@ -57,20 +57,15 @@ Route::get('categories/blogs/ids', [BlogController::class, 'categoriesWithBlogsW
 Route::get('categories/blogs/{id}', [BlogController::class, 'categoryWithBlogsById']);
 
 
-
-Route::apiResource('categories', CategoryController::class);
-
 // 🎬 Doc videos
 
-
-// 🎬 Doc Videos Routes
-Route::get('docvideos', [DocVideoController::class, 'index']); // كل الفيديوهات
-Route::get('docvideos/{id}', [DocVideoController::class, 'show']); // فيديو محدد
-
-// 🎞️ Categories + DocVideos (بنفس منطق blogs)
 Route::get('categories/docvideos', [DocVideoController::class, 'index']); // كل الكاتيجوريات اللي فيها فيديوهات
-Route::get('categories/docvideos/{category_id}', [DocVideoController::class, 'getByCategory']); // كل الفيديوهات داخل كاتيجوري
 Route::get('categories/docvideos/{category_id}/{video_id}', [DocVideoController::class, 'showInCategory']); // فيديو محدد داخل كاتيجوري
+Route::get('categories/docvideos/{category_id}', [DocVideoController::class, 'getByCategory']); // كل الفيديوهات داخل كاتيجوري
+
+// 🎬 Doc Videos Routes (individual videos)
+Route::get('docvideos/{id}', [DocVideoController::class, 'show']); // فيديو محدد
+Route::get('docvideos', [DocVideoController::class, 'index']); // كل الفيديوهات
 
 // ==================================================
 // 📁 FILE SERVING ROUTES (with CORS support)
@@ -198,8 +193,8 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::delete('people/{id}', [PersonController::class, 'destroy']);
 
         // Categories
-        Route::get('categories', [CategoryController::class, 'index']);
-        Route::get('categories/{id}', [CategoryController::class, 'show']);
+        // Route::get('categories', [CategoryController::class, 'index']);
+        // Route::get('categories/{id}', [CategoryController::class, 'show']);
 
         // Posts
         Route::get('posts', [PostController::class, 'index']);
