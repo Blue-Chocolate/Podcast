@@ -39,14 +39,16 @@ class DocVideoResource extends Resource
                 ->searchable(),
 
             Forms\Components\FileUpload::make('image_path')
-                ->label('الصورة')
-                ->image()
-                ->directory('doc_videos/images')
-                ->maxSize(2048),
+    ->label('الصورة')
+    ->disk('doc_videos')
+    ->directory('images')
+    ->image()
+    ->maxSize(2048),
 
             Forms\Components\FileUpload::make('video_path')
                 ->label('الفيديو')
-                ->directory('doc_videos/videos')
+                ->disk('doc_videos')
+                ->directory('videos')
                 ->acceptedFileTypes(['video/mp4', 'video/mov', 'video/avi'])
                 ->required(),
 

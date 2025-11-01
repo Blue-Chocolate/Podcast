@@ -16,28 +16,31 @@ class PodcastController extends Controller
 {
     // ✅ List all podcasts with pagination
     public function index(Request $request)
-    {
-        $limit = $request->query('limit', 10);
-        $page = $request->query('page', 1);
-        $offset = ($page - 1) * $limit;
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
+    $offset = ($page - 1) * $limit;
 
-        $podcasts = Podcast::offset($offset)
-            ->limit($limit)
-            ->orderBy('created_at', 'desc')
-            ->get();
+    $podcasts = Podcast::with(['episodes' => function ($q) {
+            $q->select('id', 'title', 'podcast_id', 'duration', 'created_at');
+        }])
+        ->offset($offset)
+        ->limit($limit)
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        $total = Podcast::count();
+    $total = Podcast::count();
 
-        return response()->json([
-            'data' => $podcasts,
-            'pagination' => [
-                'current_page' => (int) $page,
-                'per_page' => (int) $limit,
-                'total' => $total,
-                'last_page' => ceil($total / $limit),
-            ],
-        ]);
-    }
+    return response()->json([
+        'data' => $podcasts,
+        'pagination' => [
+            'current_page' => (int) $page,
+            'per_page' => (int) $limit,
+            'total' => $total,
+            'last_page' => ceil($total / $limit),
+        ],
+    ]);
+}
 
     // ✅ Show a specific podcast with its episodes
    public function show($id, Request $request, ShowPodcastAction $showAction)
@@ -46,24 +49,34 @@ class PodcastController extends Controller
     $page = (int) $request->query('page', 1);
     $offset = ($page - 1) * $limit;
 
+    // Get podcast with its cover image
     $podcast = $showAction->execute($id);
 
-    // Get paginated episodes
+    if ($podcast->cover_image && !str_starts_with($podcast->cover_image, 'http')) {
+        $podcast->cover_image = asset('storage/' . ltrim($podcast->cover_image, '/'));
+    }
+
+    // Get paginated episodes (including their cover images)
     $episodesQuery = $podcast->episodes()
-        ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'created_at')
+        ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'cover_image', 'created_at')
         ->orderBy('created_at', 'desc');
 
     $total = $episodesQuery->count();
     $episodes = $episodesQuery->offset($offset)->limit($limit)->get();
 
-    // Fix URLs
     foreach ($episodes as $episode) {
+        // Fix audio/video URLs
         if ($episode->audio_url && !str_starts_with($episode->audio_url, 'http')) {
             $episode->audio_url = asset('storage/' . ltrim($episode->audio_url, '/'));
         }
 
         if ($episode->video_url && !str_starts_with($episode->video_url, 'http')) {
             $episode->video_url = asset('storage/' . ltrim($episode->video_url, '/'));
+        }
+
+        // ✅ Fix episode cover image URL
+        if ($episode->cover_image && !str_starts_with($episode->cover_image, 'http')) {
+            $episode->cover_image = asset('storage/' . ltrim($episode->cover_image, '/'));
         }
     }
 

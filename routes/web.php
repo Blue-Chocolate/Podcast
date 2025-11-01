@@ -24,6 +24,11 @@ Route::get('/covers/{file}', function ($file) {
     abort_unless(file_exists($path), 404);
     return response()->file($path);
 });
+Route::get('/doc_videos/{file}', function ($file) {
+    $path = base_path('doc_videos/' . $file);
+    abort_unless(file_exists($path), 404);
+    return response()->file($path);
+});
 Route::get('/files/{file}', function ($file) {
     $path = base_path('public/storage/files/' . $file);
     abort_unless(file_exists($path), 404);
