@@ -25,7 +25,7 @@ public function index(ListEpisodesAction $action, Request $request)
         $limit = $request->query('limit', 10);
 
         $episodes = \App\Models\Episode::with('podcast:id,title')
-            ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'created_at')
+            ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'cover_image', 'video_url', 'created_at')
             ->paginate($limit);
 
         return response()->json([
@@ -39,7 +39,9 @@ public function index(ListEpisodesAction $action, Request $request)
                     'video_url' => $episode->video_url,
                     'created_at' => $episode->created_at,
                     'podcast_id' => $episode->podcast_id,
-                    'podcast_title' => $episode->podcast->title ?? null
+                    'podcast_title' => $episode->podcast->title ?? null,
+                    'cover_image' => $episode->cover_image,
+
                 ];
             })
         ]);
