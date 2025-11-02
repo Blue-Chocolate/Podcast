@@ -10,20 +10,16 @@ class VideoCategoryRepository
     public function getAllCategoriesWithVideos($perPage = 10)
     {
         return VideoCategory::with(['videos' => function ($query) {
-            $query->where('is_active', true)
-                  ->select('id', 'title', 'description', 'file_path', 'video_category_id', 'views_count');
+            $query->select('id', 'title', 'description', 'video_category_id', 'views_count');
         }])
-        ->where('is_active', true)
         ->paginate($perPage, ['id', 'name', 'description', 'image_path', 'slug', 'views_count']);
     }
 
     public function getCategoryWithVideos($categoryId, $perPage = 10)
     {
-        return VideoCategory::where('is_active', true)
-            ->where('id', $categoryId)
+        return VideoCategory::where('id', $categoryId)
             ->with(['videos' => function ($query) use ($perPage) {
-                $query->where('is_active', true)
-                      ->select('id', 'title', 'description', 'file_path', 'video_category_id', 'views_count')
+                $query->select('id', 'title', 'description', 'video_category_id', 'views_count')
                       ->paginate($perPage);
             }])
             ->firstOrFail();

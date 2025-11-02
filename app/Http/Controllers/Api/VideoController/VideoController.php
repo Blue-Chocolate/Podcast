@@ -102,7 +102,7 @@ class VideoController extends Controller
         $doc_video = $updateAction->execute($doc_video, $data);
 
         return response()->json([
-            'message' => 'Doc video updated successfully',
+            'message' => ' video updated successfully',
             'data' => $doc_video
         ]);
     }
