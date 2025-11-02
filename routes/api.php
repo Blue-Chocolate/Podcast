@@ -48,8 +48,8 @@ Route::get('podcasts/{id}', [PodcastController::class, 'show']);
 // 📝 Blog routes
 Route::get('blogs', [BlogController::class, 'index']);
 Route::get('blogs/{id}', [BlogController::class, 'show']);
-Route::get('blogs/categories', [BlogController::class, 'categories']);
-Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
+// Route::get('blogs/categories', [BlogController::class, 'categories']);
+// Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
 
 use App\Http\Controllers\Api\BlogCategoryController\BlogCategoryController;
 
@@ -70,8 +70,8 @@ Route::prefix('categories/videos')->group(function () {
 });
 
 // 🎬 Doc Videos Routes (individual videos)
-Route::get('Videos/{id}', [VideoController::class, 'show']); // فيديو محدد
-Route::get('Videos/list', [VideoController::class, 'videosList']);
+Route::get('videos/{id}', [VideoController::class, 'show']); // فيديو محدد
+Route::get('videos', [VideoController::class, 'videosList']);
 
 // ==================================================
 // 📁 FILE SERVING ROUTES (with CORS support)
