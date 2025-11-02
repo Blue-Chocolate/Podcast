@@ -22,7 +22,7 @@ class PodcastController extends Controller
     $offset = ($page - 1) * $limit;
 
     $podcasts = Podcast::with(['episodes' => function ($q) {
-            $q->select('id', 'title', 'podcast_id', 'duration', 'created_at');
+            $q->select('id', 'title', 'podcast_id', 'duration_seconds', 'created_at');
         }])
         ->offset($offset)
         ->limit($limit)
@@ -93,31 +93,31 @@ class PodcastController extends Controller
 }
 
     // ✅ List all episodes for a specific podcast
-    public function episodes($id)
-    {
-        $podcast = Podcast::findOrFail($id);
+   public function episodes($id)
+{
+    $podcast = Podcast::findOrFail($id);
 
-        $episodes = $podcast->episodes()
-            ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'created_at')
-            ->latest()
-            ->get();
-
-        foreach ($episodes as $episode) {
+    $episodes = $podcast->episodes()
+        ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'created_at')
+        ->latest()
+        ->get()
+        ->map(function ($episode) {
             if ($episode->audio_url && !str_starts_with($episode->audio_url, 'http')) {
                 $episode->audio_url = asset('storage/' . ltrim($episode->audio_url, '/'));
             }
-
             if ($episode->video_url && !str_starts_with($episode->video_url, 'http')) {
                 $episode->video_url = asset('storage/' . ltrim($episode->video_url, '/'));
             }
-        }
+            return $episode;
+        });
 
-        return response()->json([
-            'podcast_id' => $podcast->id,
-            'podcast_title' => $podcast->title,
-            'episodes' => $episodes,
-        ]);
-    }
+    return response()->json([
+        'podcast_id' => $podcast->id,
+        'podcast_name' => $podcast->name,
+        'podcast_title' => $podcast->title,
+        'episodes' => $episodes
+    ]);
+}
 
     // ✅ Create a new podcast
     public function store(Request $request, CreatePodcastAction $createAction)

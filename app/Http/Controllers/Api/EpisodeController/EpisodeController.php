@@ -19,18 +19,36 @@ use Exception;
 
 class EpisodeController extends Controller
 {
-public function index(ListEpisodesAction $action , Request $request)
+public function index(ListEpisodesAction $action, Request $request)
 {
-$limit = $request->query('limit', 10);
-$episodes = \App\Models\Episode::paginate($limit);
+    try {
+        $limit = $request->query('limit', 10);
 
-return response()->json($episodes);
-try {
-$episodes = $action->execute();
-return response()->json(['status' => 'success', 'data' => $episodes]);
-} catch (Exception $e) {
-return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-}
+        $episodes = \App\Models\Episode::with('podcast:id,title')
+            ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'video_url', 'created_at')
+            ->paginate($limit);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $episodes->map(function ($episode) {
+                return [
+                    'id' => $episode->id,
+                    'title' => $episode->title,
+                    'description' => $episode->description,
+                    'audio_url' => $episode->audio_url,
+                    'video_url' => $episode->video_url,
+                    'created_at' => $episode->created_at,
+                    'podcast_id' => $episode->podcast_id,
+                    'podcast_title' => $episode->podcast->title ?? null
+                ];
+            })
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
 }
 
 public function show($id, ShowEpisodeAction $action)

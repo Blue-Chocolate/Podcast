@@ -24,9 +24,6 @@ class Podcast extends Model
         return $this->hasMany(Episode::class);
     }
     // get all people (hosts & guests) involved in this podcast
-     public function people()
-    {
-        return $this->hasManyThrough(Person::class, Episode::class, 'podcast_id', 'id');
-    }
+  
 }
 

@@ -8,12 +8,7 @@ use App\Models\User;
 // Controllers
 use App\Http\Controllers\Api\PodcastController\PodcastController;
 use App\Http\Controllers\Api\EpisodeController\EpisodeController;
-use App\Http\Controllers\Api\CategoryController\CategoryController;
-use App\Http\Controllers\Api\PodcastRSSController\PodcastRssController;
 use App\Http\Controllers\Api\FeedController\FeedController;
-use App\Http\Controllers\Api\EpisodeFileController\EpisodeFileController;
-use App\Http\Controllers\Api\TranscriptController\TranscriptController;
-use App\Http\Controllers\Api\PersonController\PersonController;
 use App\Http\Controllers\Api\BlogController\BlogController;
 use App\Http\Controllers\Api\PostController\PostController;
 use App\Http\Controllers\Api\PlaylistController\PlaylistController;
@@ -22,11 +17,12 @@ use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 use App\Http\Controllers\Api\NewsController\NewsController;
 use App\Http\Controllers\Api\SearchController\SearchController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Api\DocVideoController\DocVideoController;
+use App\Http\Controllers\Api\VideoController\VideoController;
 use App\Http\Controllers\Api\SubscriberController\SubscriberController;
 use App\Http\Controllers\Api\ContactUsController\ContactUsController;
 use App\Http\Controllers\Api\SeasonController\SeasonController;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Controllers\Api\VideoCategoryController\VideoCategoryController;
 
 // ==================================================
 // 🔓 PUBLIC ROUTES
@@ -36,6 +32,7 @@ Route::post('/subscribe', [SubscriberController::class, 'store'])->name('subscri
 Route::post('/news', [NewsController::class, 'store']);
 Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('/releases/{id}', [ReleaseController::class, 'show']);
+Route::middleware('auth:sanctum')->get('releases/{id}/download/{type?}', [ReleaseController::class, 'download']);
 
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 Route::post('submissions', [SubmissionController::class, 'store']);
@@ -54,20 +51,27 @@ Route::get('blogs/{id}', [BlogController::class, 'show']);
 Route::get('blogs/categories', [BlogController::class, 'categories']);
 Route::get('blogs/category/{category_id}', [BlogController::class, 'categoryBlogs']);
 
-Route::get('categories/blogs', [BlogController::class, 'categoriesWithBlogs']);
-Route::get('categories/blogs/ids', [BlogController::class, 'categoriesWithBlogsWithIds']);
-Route::get('categories/blogs/{id}', [BlogController::class, 'categoryWithBlogsById']);
+use App\Http\Controllers\Api\BlogCategoryController\BlogCategoryController;
+
+Route::prefix('categories/blogs')->group(function () {
+    Route::get('/', [BlogCategoryController::class, 'index']); // all categories with blogs
+    Route::get('/{category_id}', [BlogCategoryController::class, 'show']); // category + blogs
+    Route::get('/{category_id}/{blog_id}', [BlogCategoryController::class, 'showBlog']); // specific blog
+});
 
 
 // 🎬 Doc videos
 
-Route::get('categories/docvideos', [DocVideoController::class, 'index']); // كل الكاتيجوريات اللي فيها فيديوهات
-Route::get('categories/docvideos/{category_id}/{video_id}', [DocVideoController::class, 'showInCategory']); // فيديو محدد داخل كاتيجوري
-Route::get('categories/docvideos/{category_id}', [DocVideoController::class, 'getByCategory']); // كل الفيديوهات داخل كاتيجوري
+
+Route::prefix('categories/videos')->group(function () {
+    Route::get('/', [VideoCategoryController::class, 'index']); // all categories with videos
+    Route::get('/{category_id}', [VideoCategoryController::class, 'show']); // single category + videos
+    Route::get('/{category_id}/{video_id}', [VideoCategoryController::class, 'showVideo']); // single video inside category
+});
 
 // 🎬 Doc Videos Routes (individual videos)
-Route::get('docvideos/{id}', [DocVideoController::class, 'show']); // فيديو محدد
-Route::get('docvideos/list', [DocVideoController::class, 'videosList']);
+Route::get('Videos/{id}', [VideoController::class, 'show']); // فيديو محدد
+Route::get('Videos/list', [VideoController::class, 'videosList']);
 
 // ==================================================
 // 📁 FILE SERVING ROUTES (with CORS support)
@@ -171,30 +175,6 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class . ':admin'])
         Route::put('podcasts/{id}', [PodcastController::class, 'update']);
         Route::delete('podcasts/{id}', [PodcastController::class, 'destroy']);
 
-        // Episodes
-     
-
-        // Episode Files
-        Route::get('episode-files', [EpisodeFileController::class, 'index']);
-        Route::get('episode-files/{id}', [EpisodeFileController::class, 'show']);
-        Route::post('episode-files', [EpisodeFileController::class, 'store']);
-        Route::put('episode-files/{id}', [EpisodeFileController::class, 'update']);
-        Route::delete('episode-files/{id}', [EpisodeFileController::class, 'destroy']);
-
-        // Transcripts
-        Route::get('transcripts', [TranscriptController::class, 'index']);
-        Route::get('transcripts/{id}', [TranscriptController::class, 'show']);
-
-        // People
-        Route::get('people', [PersonController::class, 'index']);
-        Route::get('people/{id}', [PersonController::class, 'show']);
-        Route::post('people', [PersonController::class, 'store']);
-        Route::put('people/{id}', [PersonController::class, 'update']);
-        Route::delete('people/{id}', [PersonController::class, 'destroy']);
-
-        // Categories
-        // Route::get('categories', [CategoryController::class, 'index']);
-        // Route::get('categories/{id}', [CategoryController::class, 'show']);
 
         // Posts
         Route::get('posts', [PostController::class, 'index']);

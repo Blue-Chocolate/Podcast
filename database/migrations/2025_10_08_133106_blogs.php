@@ -16,8 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('description')->nullable();
             $table->text('content');
-            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
-            $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
+            $table->foreignId('blog_category_id')->nullable()->constrained('blog_categories')->onDelete('set null');            $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->dateTime('publish_date')->nullable();
             $table->integer('views')->default(0);
             $table->string('image', 255)->nullable();

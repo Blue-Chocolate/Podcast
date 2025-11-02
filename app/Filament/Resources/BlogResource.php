@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
 use App\Models\User;
-use App\Models\Category;
+use App\Models\BlogCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -54,7 +54,6 @@ class BlogResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // New Header Image Upload
                 Forms\Components\FileUpload::make('header_image')
                     ->label('صورة الغلاف')
                     ->image()
@@ -66,11 +65,24 @@ class BlogResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // ✅ Relationship with Category
-                Forms\Components\Select::make('category_id')
+                // ✅ Category Select - using correct relationship name
+                Forms\Components\Select::make('blog_category_id')
                     ->label('التصنيف')
                     ->relationship('category', 'name')
                     ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->label('اسم التصنيف')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label('الوصف')
+                            ->maxLength(500),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('نشط')
+                            ->default(true),
+                    ])
                     ->required(),
 
                 Forms\Components\Select::make('status')
@@ -120,11 +132,12 @@ class BlogResource extends Resource
                     ->label('الإعلان')
                     ->limit(30),
 
-                // ✅ Show category name
+                // ✅ Fixed - using correct relationship name
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('التصنيف')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('لا يوجد تصنيف'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('الحالة')
@@ -162,6 +175,21 @@ class BlogResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('blog_category_id')
+                    ->label('التصنيف')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
+                
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        'published' => 'منشور',
+                        'draft' => 'مسودة',
+                        'archived' => 'مؤرشف',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('تعديل'),

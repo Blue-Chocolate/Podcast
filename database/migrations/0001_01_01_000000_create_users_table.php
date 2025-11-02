@@ -11,15 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('users', function (Blueprint $table) {
+      Schema::create('users', function (Blueprint $table) {
     $table->id();
     $table->string('name')->nullable();
     $table->string('email')->unique();
+    $table->integer('age')->nullable();
+    $table->string('phone_number', 20)->nullable();
     $table->string('password');
-    $table->enum('role', ['admin','editor','uploader','viewer'])->default('viewer');
+    $table->enum('role', ['admin', 'editor', 'uploader', 'viewer'])->default('viewer');
     $table->string('avatar_url', 500)->nullable();
+    $table->rememberToken(); // 🔹 Recommended
     $table->timestamps();
 });
+
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

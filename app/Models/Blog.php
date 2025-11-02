@@ -10,13 +10,13 @@ class Blog extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+     protected $fillable = [
         'header_image',
         'user_id',
         'title',
         'description',
         'content',
-        'category',
+        'blog_category_id', 
         'status',
         'publish_date',
         'views',
@@ -103,8 +103,9 @@ class Blog extends Model
             Cache::forget('blogs:published:with-user');
         }
     }
-    public function category()
+public function category()
 {
-    return $this->belongsTo(Category::class);
+    return $this->belongsTo(BlogCategory::class, 'blog_category_id');
 }
+
 }

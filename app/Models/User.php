@@ -18,6 +18,9 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar_url',
+        'age',
+        'phone_number',
+        'role', // 🔹 Add this if you’ll assign roles manually or via form
     ];
 
     protected $hidden = [
@@ -28,7 +31,6 @@ class User extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
     ];
-
     /**
      * Relationships
      */
@@ -91,10 +93,7 @@ class User extends Authenticatable
             self::clearCache($user->id);
         });
     }
-    public function organizations()
-{
-    return $this->hasMany(Organization::class);
-}
+ 
 public function canAccessFilament(): bool
 {
     return true;
