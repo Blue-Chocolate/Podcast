@@ -10,6 +10,7 @@ class BlogCategory extends Model
 
     protected $fillable = [
         'name',
+        'header_image',
         'description',
         'image_path',
         'slug',
