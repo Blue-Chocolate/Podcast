@@ -14,6 +14,7 @@ return new class extends Migration
     Schema::create('releases', function (Blueprint $table) {
         $table->id();
         $table->string('title');
+        $table->integer('views_count');
         $table->string('file_path');
         $table->string('excel_path')->nullable();
         $table->string('powerbi_path')->nullable();

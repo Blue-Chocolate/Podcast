@@ -32,8 +32,13 @@ Route::post('/subscribe', [SubscriberController::class, 'store'])->name('subscri
 Route::post('/news', [NewsController::class, 'store']);
 Route::get('releases', [ReleaseController::class, 'index']);
 Route::get('/releases/{id}', [ReleaseController::class, 'show']);
-Route::middleware('auth:sanctum')->get('releases/{id}/download/{type?}', [ReleaseController::class, 'download']);
-
+Route::middleware('auth:sanctum')->group(function () {
+    // IMPORTANT: Add the route name here
+    Route::get('/releases/{id}/download/{type}', [ReleaseController::class, 'download'])
+        ->name('releases.download');
+    
+    Route::post('/releases', [ReleaseController::class, 'store']);
+});
 Route::get('podcasts/{slug}/feed', [FeedController::class, 'showRssFeed']);
 Route::post('submissions', [SubmissionController::class, 'store']);
 
@@ -232,4 +237,4 @@ Route::prefix('seasons')->group(function () {
 // ==================================================
 // 🔍 SEARCH ROUTE
 // ==================================================
-Route::get('/search', [SearchController::class, 'index']);
+Route::get('/search', [SearchController::class, 'search']);
