@@ -20,77 +20,91 @@ class BlogCategoryController extends Controller
      * GET /api/categories/blogs?page=&limit=
      * Get all categories (with blogs limited per category)
      */
-    public function index(Request $request)
-    {
-        $limit = $request->input('limit', 10);
-        $categories = $this->repo->getAll($limit);
+  public function index(Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $page = $request->query('page', 1);
 
-        return response()->json([
-            'success' => true,
-            'pagination' => [
-                'current_page' => $categories->currentPage(),
-                'per_page' => $categories->perPage(),
-                'total' => $categories->total(),
-                'last_page' => $categories->lastPage(),
-            ],
-            'categories' => $categories->items(),
-        ]);
-    }
+    $categories = $this->repo->getAll($limit, $page);
 
+    // Map categories to your desired structure
+    $data = $categories->getCollection()->map(function ($category) {
+        return [
+            'id' => $category->id,
+            'name' => $category->name,
+            'image' => $category->image_path ? asset('storage/' . $category->image_path) : null,
+            'description' => $category->description,
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'data' => $data,
+        'pagination' => [
+            'current_page' => $categories->currentPage(),
+            'per_page' => $categories->perPage(),
+            'total_items' => $categories->total(),
+            'last_page' => $categories->lastPage(),
+        ],
+    ]);
+}
     /**
      * GET /api/categories/blogs/{category_id}?page=&limit=
      * Get one category with paginated blogs
      */
- public function show($category_id)
-    {
-        // Get the category with all its blogs
-        $category = BlogCategory::with('blogs')->find($category_id);
+ public function show(Request $request, $category_id)
+{
+    // Pagination inputs
+    $perPage = $request->query('limit', 10);
+    $page = $request->query('page', 1);
 
-        if (!$category) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Category not found',
-            ], 404);
-        }
+    // Find category
+    $category = BlogCategory::find($category_id);
 
-        // Map blogs to include all details + category info
-        $blogs = $category->blogs->map(function ($blog) use ($category) {
-            return [
-                'id' => $blog->id,
-                'user_id' => $blog->user_id,
-                'header_image' => $blog->header_image ? asset('storage/' . $blog->header_image) : null,
-                'title' => $blog->title,
-                'description' => $blog->description,
-                'content' => $blog->content,
-                'status' => $blog->status,
-                'publish_date' => $blog->publish_date,
-                'views' => $blog->views,
-                'image' => $blog->image ? asset('storage/' . $blog->image) : null,
-                'announcement' => $blog->announcement,
-                'footer' => $blog->footer,
-
-                // include category info in each blog
-                'blog_category_id' => $category->id,
-                'blog_category_name' => $category->name,
-            ];
-        });
-
-        // Response
+    if (!$category) {
         return response()->json([
-            'success' => true,
+            'success' => false,
+            'message' => 'Category not found',
+        ], 404);
+    }
+
+    // Get paginated blogs for this category
+    $blogsQuery = $category->blogs()->paginate($perPage, ['*'], 'page', $page);
+
+    // Transform blogs to match your structure
+    $blogs = $blogsQuery->getCollection()->map(function ($blog) use ($category) {
+        return [
+            'id' => $blog->id,
+            'title' => $blog->title,
+            'description' => $blog->description,
+            'views' => $blog->views,
+            'image' => $blog->image ? asset('storage/' . $blog->image) : null,
+            'published_at' => $blog->publish_date,
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
-                'description' => $category->description,
-                'image_path' => $category->image_path ? asset('storage/' . $category->image_path) : null,
-                'slug' => $category->slug,
-                'is_active' => $category->is_active,
-                'views_count' => $category->views_count,
-
             ],
-            'blogs' => $blogs,
-        ]);
-    }
+        ];
+    });
+
+    // Build response
+    return response()->json([
+        'success' => true,
+        'category' => [
+            'id' => $category->id,
+            'name' => $category->name,
+            'image' => $category->image_path ? asset('storage/' . $category->image_path) : null,
+            'description' => $category->description,
+        ],
+        'blogs' => $blogs,
+        'pagination' => [
+            'current_page' => $blogsQuery->currentPage(),
+            'per_page' => $blogsQuery->perPage(),
+            'total_items' => $blogsQuery->total(),
+            'last_page' => $blogsQuery->lastPage(),
+        ],
+    ]);
+}
     /**
      * GET /api/categories/blogs/{category_id}/blog/{blog_id}
      * Get a specific blog inside a category

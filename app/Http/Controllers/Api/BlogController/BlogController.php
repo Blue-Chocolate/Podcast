@@ -13,33 +13,43 @@ use App\Actions\Blogs\{
     ListBlogsAction
 };
 use App\Models\Blog;
-use App\Models\Category;
+use App\Models\BlogCategory;
+use Exception;
 
 class BlogController extends Controller
 {
     /**
      * Display a paginated list of blogs.
      */
-    public function index(ListBlogsAction $action, Request $request)
+    public function index(Request $request)
     {
         $limit = $request->query('limit', 10);
         $page = $request->query('page', 1);
         $offset = ($page - 1) * $limit;
 
-        $blogs = Blog::with('category:id,name') // eager load category name
+        $blogs = Blog::with('category:id,name')
             ->offset($offset)
             ->limit($limit)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get([
+                'id',
+                'title',
+                'description',
+                'views',
+                'image',
+                'publish_date',
+                'blog_category_id'
+            ]);
 
         $total = Blog::count();
 
         return response()->json([
+            'success' => true,
             'data' => $blogs,
             'pagination' => [
                 'current_page' => (int) $page,
                 'per_page' => (int) $limit,
-                'total' => $total,
+                'total_items' => $total,
                 'last_page' => ceil($total / $limit),
             ],
         ]);
@@ -51,39 +61,35 @@ class BlogController extends Controller
     public function show($id, ShowBlogAction $action)
     {
         $blog = $action->execute($id);
-        $blog->increment('views');
 
-        return response()->json($blog);
-    }
-
-    /**
-     * Store a newly created blog.
-     */
-    public function store(Request $request, CreateBlogAction $action)
-    {
-        $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'content' => 'required|string',
-            'category_id' => 'nullable|exists:categories,id',
-            'status' => 'nullable|in:draft,published,archived',
-            'publish_date' => 'nullable|date',
-            'announcement' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'footer' => 'nullable|string|max:255',
-        ]);
-
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('blogs', 'public');
+        if (!$blog) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Blog not found',
+            ], 404);
         }
 
-        $blog = $action->execute($data);
+        $blog->increment('views');
 
         return response()->json([
-            'message' => 'Blog created successfully',
-            'data' => $blog
-        ], 201);
+            'success' => true,
+            'data' => [
+                'id' => $blog->id,
+                'title' => $blog->title,
+                'description' => $blog->description,
+                'content' => $blog->content,
+                'views' => $blog->views,
+                'image' => $blog->image,
+                'published_at' => $blog->publish_date,
+                'header_image' => $blog->header_image ?? null,
+                'announcement' => $blog->announcement,
+                'user_name' => $blog->user->name ?? null,
+                'category' => $blog->category ? [
+                    'id' => $blog->category->id,
+                    'name' => $blog->category->name,
+                ] : null,
+            ],
+        ]);
     }
 
     /**
@@ -97,7 +103,7 @@ class BlogController extends Controller
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
             'content' => 'nullable|string',
-            'category_id' => 'nullable|exists:categories,id',
+            'blog_category_id' => 'nullable|exists:blog_categories,id',
             'status' => 'nullable|in:draft,published,archived',
             'publish_date' => 'nullable|date',
             'announcement' => 'nullable|string|max:255',
@@ -129,13 +135,11 @@ class BlogController extends Controller
     }
 
     /**
-     * List all available categories.
+     * List all available blog categories.
      */
     public function categories()
-    
     {
-        dd('categories() method invoked successfully!');
-        $categories = Category::select('id', 'name', 'slug')->get();
+        $categories = BlogCategory::select('id', 'name', 'slug')->get();
 
         return response()->json([
             'categories' => $categories
@@ -143,19 +147,17 @@ class BlogController extends Controller
     }
 
     /**
-     * List blogs by category ID.
+     * List blogs by blog category ID.
      */
-    public function categoryBlogs(Request $request, $category_id)
+    public function categoryBlogs(Request $request, $blog_category_id)
     {
         $limit = $request->query('limit', 10);
         $page = $request->query('page', 1);
         $offset = ($page - 1) * $limit;
 
-        // Validate category exists
-        $category = Category::findOrFail($category_id);
+        $category = BlogCategory::findOrFail($blog_category_id);
 
-        // Fetch blogs belonging to this category
-        $query = Blog::where('category_id', $category_id);
+        $query = Blog::where('blog_category_id', $blog_category_id);
         $total = $query->count();
 
         $blogs = $query->with('category:id,name')
@@ -178,93 +180,103 @@ class BlogController extends Controller
             ],
         ]);
     }
+
+    /**
+     * List blog categories that have at least one blog.
+     */
     public function categoriesWithBlogs(Request $request)
-{
-    $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
 
-    $query = Category::whereHas('blogs') // only categories with blogs
-        ->withCount('blogs');
+        $query = BlogCategory::whereHas('blogs')->withCount('blogs');
+        $total = $query->count();
 
-    $total = $query->count();
+        $categories = $query->offset($offset)
+            ->limit($limit)
+            ->get(['id', 'name', 'slug']);
 
-    $categories = $query->offset($offset)
-        ->limit($limit)
-        ->get(['id', 'name', 'slug']);
-
-    return response()->json([
-        'data' => $categories,
-        'pagination' => [
-            'current_page' => (int) $page,
-            'per_page' => (int) $limit,
-            'total' => $total,
-            'last_page' => ceil($total / $limit),
-        ]
-    ]);
-}
- public function categoriesWithBlogsWithIds(Request $request)
-{
-    $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
-
-    $categoryIds = $request->query('ids', []);
-
-    $query = Category::whereIn('id', $categoryIds)
-        ->whereHas('blogs')
-        ->withCount('blogs');
-
-    $total = $query->count();
-
-    $categories = $query->offset($offset)
-        ->limit($limit)
-        ->get(['id', 'name', 'slug']);
-
-    return response()->json([
-        'data' => $categories,
-        'pagination' => [
-            'current_page' => (int) $page,
-            'per_page' => (int) $limit,
-            'total' => $total,
-            'last_page' => ceil($total / $limit),
-        ]
-    ]);
-}
-
-
-public function categoryWithBlogsById($id, Request $request)
-{
-    $limit = $request->query('limit', 10);
-    $page = $request->query('page', 1);
-    $offset = ($page - 1) * $limit;
-
-    $category = Category::where('id', $id)
-        ->whereHas('blogs')
-        ->with(['blogs' => function($query) use ($limit, $offset) {
-            $query->offset($offset)->limit($limit)->orderBy('created_at', 'desc');
-        }])
-        ->first();
-
-    if (!$category) {
-        return response()->json(['error' => 'Category not found or has no blogs'], 404);
+        return response()->json([
+            'data' => $categories,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $total,
+                'last_page' => ceil($total / $limit),
+            ]
+        ]);
     }
 
-    $totalBlogs = $category->blogs()->count();
+    /**
+     * List blog categories (with specific IDs) that have blogs.
+     */
+    public function categoriesWithBlogsWithIds(Request $request)
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
 
-    return response()->json([
-        'category' => [
-            'id' => $category->id,
-            'name' => $category->name,
-            'slug' => $category->slug,
-        ],
-        'blogs' => $category->blogs,
-        'pagination' => [
-            'current_page' => (int) $page,
-            'per_page' => (int) $limit,
-            'total' => $totalBlogs,
-            'last_page' => ceil($totalBlogs / $limit),
-        ]
-    ]);
-}
+        $categoryIds = $request->query('ids', []);
+
+        $query = BlogCategory::whereIn('id', $categoryIds)
+            ->whereHas('blogs')
+            ->withCount('blogs');
+
+        $total = $query->count();
+
+        $categories = $query->offset($offset)
+            ->limit($limit)
+            ->get(['id', 'name', 'slug']);
+
+        return response()->json([
+            'data' => $categories,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $total,
+                'last_page' => ceil($total / $limit),
+            ]
+        ]);
+    }
+
+    /**
+     * Get a specific blog category with its blogs.
+     */
+    public function categoryWithBlogsById($id, Request $request)
+    {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
+        $offset = ($page - 1) * $limit;
+
+        $category = BlogCategory::where('id', $id)
+            ->whereHas('blogs')
+            ->with(['blogs' => function ($query) use ($limit, $offset) {
+                $query->offset($offset)
+                    ->limit($limit)
+                    ->orderBy('created_at', 'desc');
+            }])
+            ->first();
+
+        if (!$category) {
+            return response()->json(['error' => 'Category not found or has no blogs'], 404);
+        }
+
+        $totalBlogs = $category->blogs()->count();
+
+        return response()->json([
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ],
+            'blogs' => $category->blogs,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $limit,
+                'total' => $totalBlogs,
+                'last_page' => ceil($totalBlogs / $limit),
+            ]
+        ]);
+    }
 }

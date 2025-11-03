@@ -40,33 +40,81 @@ class ReleaseController extends Controller
         'created_at' => $release->created_at,
     ]);
 }
-   public function index(Request $request)
+  public function index(Request $request)
 {
-    $limit = $request->query('limit', 10);
+    try {
+        $limit = (int) $request->query('limit', 10);
+        $page = (int) $request->query('page', 1);
 
-    $releases = Release::select('id', 'title', 'description', 'images', 'file_path', 'excel_path', 'powerbi_path', 'created_at')
-        ->orderBy('created_at', 'desc')
-        ->paginate($limit);
+        // Validate pagination
+        if ($limit < 1 || $limit > 100) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Limit must be between 1 and 100',
+            ], 400);
+        }
 
-    $releases->getCollection()->transform(function ($release) {
-        $images = is_string($release->images)
-            ? json_decode($release->images, true)
-            : $release->images;
+        if ($page < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page must be greater than 0',
+            ], 400);
+        }
 
-        return [
-            'id' => $release->id,
-            'title' => $release->title,
-            'description' => $release->description,
-            'images' => collect($images)->map(fn($img) => asset($img))->toArray(),
-            'file_url' => $release->file_path ? asset($release->file_path) : null,
-            'excel_url' => $release->excel_path ? asset($release->excel_path) : null,
-            'powerbi_url' => $release->powerbi_path ? asset($release->powerbi_path) : null,
-            'created_at' => $release->created_at,
-        ];
-    });
+        // Fetch releases
+        $releases = Release::select('id', 'title', 'description', 'images', 'file_path', 'views_count', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
 
-    return response()->json($releases);
+        // Transform releases into desired structure
+        $formatted = $releases->getCollection()->transform(function ($release) {
+            // Decode images (in case stored as JSON)
+            $images = is_string($release->images)
+                ? json_decode($release->images, true)
+                : $release->images;
+
+            // Pick the first image if exists
+            $mainImage = !empty($images)
+                ? asset(ltrim($images[0], '/'))
+                : null;
+
+            return [
+                'id' => $release->id,
+                'title' => $release->title,
+                'short_description' => Str::limit($release->description, 120),
+                'image' => $mainImage,
+                'views' => $release->views_count ?? 0,
+                'published_at' => $release->created_at ? $release->created_at->timestamp : null,
+                'pdf_url' => $release->file_path ? asset($release->file_path) : null,
+            ];
+        });
+
+        // Response
+        return response()->json([
+            'success' => true,
+            'data' => $formatted,
+            'pagination' => [
+                'current_page' => $releases->currentPage(),
+                'per_page' => $releases->perPage(),
+                'total_items' => $releases->total(),
+                'last_page' => $releases->lastPage(),
+            ],
+        ]);
+
+    } catch (Exception $e) {
+        Log::error('Error fetching releases list', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while fetching releases',
+            'error' => config('app.debug') ? $e->getMessage() : null,
+        ], 500);
+    }
 }
+
 
     /**
      * Store a new release (admin only)

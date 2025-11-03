@@ -21,75 +21,97 @@ class EpisodeController extends Controller
 {
     // ✅ GET all episodes with pagination
     public function index(ListEpisodesAction $action, Request $request)
-    {
-        try {
-            $limit = $request->query('limit', 10);
+{
+    try {
+        $limit = $request->query('limit', 10);
+        $page = $request->query('page', 1);
 
-            $episodes = Episode::with('podcast:id,title')
-                ->select('id', 'podcast_id', 'title', 'description', 'audio_url', 'cover_image', 'video_url', 'created_at')
-                ->paginate($limit);
+        // Fetch episodes with related podcast (id + title only)
+        $episodes = Episode::with('podcast:id,title')
+            ->select('id', 'podcast_id', 'title', 'description', 'views_count', 'audio_url', 'cover_image', 'created_at')
+            ->paginate($limit, ['*'], 'page', $page);
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $episodes->map(function ($episode) {
-                    return [
-                        'id' => $episode->id,
-                        'title' => $episode->title,
-                        'description' => $episode->description,
-                        'audio_url' => $episode->audio_url,
-                        'video_url' => $episode->video_url,
-                        'cover_image' => $episode->cover_image,
-                        'created_at' => $episode->created_at,
-                        'podcast_id' => $episode->podcast_id,
-                        'podcast_title' => $episode->podcast->title ?? null,
-                    ];
-                }),
-                'pagination' => [
-                    'current_page' => $episodes->currentPage(),
-                    'per_page' => $episodes->perPage(),
-                    'total' => $episodes->total(),
-                    'last_page' => $episodes->lastPage(),
+        // Transform data to match the expected structure
+        $data = $episodes->getCollection()->map(function ($episode) {
+            return [
+                'id' => $episode->id,
+                'title' => $episode->title,
+                'description' => $episode->description,
+                'views_count' => $episode->views_count ?? 0,
+                'image' => $episode->cover_image ? asset('storage/' . $episode->cover_image) : null,
+                'audio_url' => $episode->audio_url,
+                'published_at' => $episode->created_at,
+                'podcast' => [
+                    'id' => $episode->podcast->id ?? null,
+                    'name' => $episode->podcast->title ?? null,
                 ],
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+            ];
+        });
+
+        // Build the response
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'pagination' => [
+                'current_page' => $episodes->currentPage(),
+                'per_page' => $episodes->perPage(),
+                'total_items' => $episodes->total(),
+                'last_page' => $episodes->lastPage(),
+            ],
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 500);
     }
+}
 
     // ✅ GET single episode by ID
-    public function show($id)
-    {
-        try {
-            $episode = Episode::with('podcast')->findOrFail($id);
+   public function show($id)
+{
+    try {
+        // Load episode with related podcast
+        $episode = Episode::with('podcast:id,title')->findOrFail($id);
 
-            $episode->increment('views_count');
+        // Increment the correct column
+        $episode->increment('views_count');
 
-            // Generate public URLs
-            $episode->video_url = $episode->video_filename
-                ? url('storage/videos/' . $episode->video_filename)
-                : null;
-
-            $episode->audio_url = $episode->audio_filename
-                ? url('storage/audios/' . $episode->audio_filename)
-                : null;
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'episode' => $episode,
-                    'podcast_id' => $episode->podcast->id ?? null,
-                    'podcast_title' => $episode->podcast->title ?? null,
+        // Build structured response
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $episode->id,
+                'title' => $episode->title,
+                'short_description' => $episode->short_description ?? Str::limit($episode->description, 120),
+                'description' => $episode->description,
+                'views' => $episode->views_count ?? 0,
+                'image' => $episode->cover_image ? asset('storage/' . $episode->cover_image) : null,
+                'audio_url' => $episode->audio_filename
+                    ? asset('storage/audios/' . $episode->audio_filename)
+                    : ($episode->audio_url ?? null),
+                'video_url' => $episode->video_filename
+                    ? asset('storage/videos/' . $episode->video_filename)
+                    : ($episode->video_url ?? null),
+                'published_at' => $episode->created_at,
+                'podcast' => [
+                    'id' => $episode->podcast->id ?? null,
+                    'name' => $episode->podcast->title ?? null,
                 ],
-            ]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['status' => 'error', 'message' => 'Episode not found'], 404);
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
+            ],
+        ]);
+    } catch (ModelNotFoundException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Episode not found',
+        ], 404);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 500);
     }
+}
 
     // ✅ POST create a new episode
     public function store(Request $request, CreateEpisodeAction $action)

@@ -53,25 +53,26 @@ class VideoController extends Controller
     ]);
 }
 
-  public function show($id, ShowVideoAction $showAction)
+ public function show($id, ShowVideoAction $showAction)
 {
     try {
         $video = $showAction->execute($id);
+
+        // Increment views count
         $video->increment('views_count');
 
+        // Return structured JSON response
         return response()->json([
-            'status' => 'success',
-            'message' => 'Video retrieved successfully',
+            'success' => true,
             'data' => [
                 'id' => $video->id,
                 'title' => $video->title,
+                'short_description' => $video->short_description,
                 'description' => $video->description,
-                'video_path' => $video->video_path,
-                'image_path' => $video->image_path ? asset('storage/' . $video->image_path) : null,
-                'views_count' => $video->views_count,
-                'created_at' => $video->created_at,
-                'updated_at' => $video->updated_at,
-                // include category info
+                'views' => $video->views_count,
+                'image' => $video->image_path ? asset('storage/' . $video->image_path) : null,
+                'video_url' => $video->video_path,
+                'published_at' => $video->created_at?->timestamp,
                 'category' => $video->category ? [
                     'id' => $video->category->id,
                     'name' => $video->category->name,
@@ -80,17 +81,16 @@ class VideoController extends Controller
         ]);
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
         return response()->json([
-            'status' => 'error',
+            'success' => false,
             'message' => 'Video not found',
         ], 404);
     } catch (\Exception $e) {
         return response()->json([
-            'status' => 'error',
+            'success' => false,
             'message' => 'Something went wrong: ' . $e->getMessage(),
         ], 500);
     }
 }
-
 
     public function update(Request $request, $id, UpdateVideoAction $updateAction)
     {
@@ -172,48 +172,61 @@ class VideoController extends Controller
             'data' => $doc_video
         ]);
     }
- public function videosList(Request $request)
+public function videosList(Request $request)
 {
-    $limit = $request->query('limit', 10);
+    try {
+        $limit = (int) $request->query('limit', 10);
 
-    // Fetch videos with their category info
-    $videos = \App\Models\Video::with('category:id,name')
-        ->orderBy('created_at', 'desc')
-        ->paginate($limit);
+        // Fetch videos with their category info
+        $videos = \App\Models\Video::with('category:id,name')
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
 
-    if ($videos->total() === 0) {
+        if ($videos->total() === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No videos found',
+            ], 404);
+        }
+
+        // Transform each video to match the desired structure
+        $videoData = $videos->getCollection()->transform(function ($video) {
+            return [
+                'id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'views' => $video->views_count ?? 0,
+                'image' => $video->image_path ? asset('storage/' . ltrim($video->image_path, '/')) : null,
+                'published_at' => $video->created_at ? $video->created_at->timestamp : null,
+                'category' => [
+                    'id' => $video->category?->id,
+                    'name' => $video->category?->name,
+                ],
+            ];
+        });
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'No videos found'
-        ], 404);
+            'success' => true,
+            'data' => $videoData,
+            'pagination' => [
+                'current_page' => $videos->currentPage(),
+                'per_page' => $videos->perPage(),
+                'total_items' => $videos->total(),
+                'last_page' => $videos->lastPage(),
+            ],
+        ]);
+    } catch (Exception $e) {
+        Log::error('Error fetching videos list', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while fetching videos',
+            'error' => config('app.debug') ? $e->getMessage() : null,
+        ], 500);
     }
-
-    // Transform each video to include category info
-    $videoData = $videos->map(function ($video) {
-        return [
-            'id' => $video->id,
-            'title' => $video->title,
-            'description' => $video->description,
-            'video_path' => $video->video_path,
-            'image_path' => $video->image_path ? asset('storage/' . $video->image_path) : null,
-            'created_at' => $video->created_at,
-            'category_id' => $video->category?->id,
-            'category_name' => $video->category?->name,
-            'views_count' => $video->views_count,
-        ];
-    });
-
-    return response()->json([
-        'status' => 'success',
-        'data' => $videoData,
-        'pagination' => [
-            'current_page' => $videos->currentPage(),
-            'per_page' => $videos->perPage(),
-            'total' => $videos->total(),
-            'last_page' => $videos->lastPage(),
-        ],
-        'message' => 'Videos retrieved successfully'
-    ]);
 }
 
 }
