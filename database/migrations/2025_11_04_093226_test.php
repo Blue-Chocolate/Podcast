@@ -16,6 +16,8 @@ return new class extends Migration
 
             $table->id();
             $table->string('title');
+                        $table->string('name');
+
       
         });
     }
