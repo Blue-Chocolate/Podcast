@@ -4,114 +4,132 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
-use App\Models\User;
 use App\Models\BlogCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
 
 class BlogResource extends Resource
 {
     protected static ?string $model = Blog::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    public static function getModelLabel(): string
-    {
-        return 'مدونة';
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return 'المدونات';
-    }
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationGroup = 'إدارة المحتوى';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $navigationLabel = 'المدونات';
+    protected static ?string $modelLabel = 'مدونة';
+    protected static ?string $pluralModelLabel = 'المدونات';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('user_id')
-                    ->label('المستخدم')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->required(),
+                Forms\Components\Section::make('معلومات المدونة الأساسية')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('المستخدم')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->required()
+                            ->preload(),
 
-                Forms\Components\TextInput::make('title')
-                    ->label('العنوان')
-                    ->required()
-                    ->maxLength(255),
-
-                Forms\Components\Textarea::make('description')
-                    ->label('الوصف')
-                    ->maxLength(500)
-                    ->columnSpanFull(),
-
-                Forms\Components\TextInput::make('announcement')
-                    ->label('الإعلان')
-                    ->maxLength(255)
-                    ->columnSpanFull(),
-
-                Forms\Components\FileUpload::make('header_image')
-                    ->label('صورة الغلاف')
-                    ->image()
-                    ->directory('blogs/headers')
-                    ->columnSpanFull(),
-
-                Forms\Components\RichEditor::make('content')
-                    ->label('المحتوى')
-                    ->required()
-                    ->columnSpanFull(),
-
-                // ✅ Category Select - using correct relationship name
-                Forms\Components\Select::make('blog_category_id')
-                    ->label('التصنيف')
-                    ->relationship('category', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('name')
-                            ->label('اسم التصنيف')
+                        Forms\Components\TextInput::make('title')
+                            ->label('العنوان')
                             ->required()
                             ->maxLength(255),
+
                         Forms\Components\Textarea::make('description')
                             ->label('الوصف')
-                            ->maxLength(500),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('نشط')
-                            ->default(true),
+                            ->required()
+                            ->maxLength(500)
+                            ->rows(3),
+
+                        Forms\Components\TextInput::make('announcement')
+                            ->label('الإعلان')
+                            ->required()
+                            ->maxLength(255),
                     ])
-                    ->required(),
+                    ->columns(2),
 
-                Forms\Components\Select::make('status')
-                    ->label('الحالة')
-                    ->options([
-                        'published' => 'منشور',
-                        'draft' => 'مسودة',
-                        'archived' => 'مؤرشف',
+                Forms\Components\Section::make('الصور')
+                    ->schema([
+                        Forms\Components\FileUpload::make('header_image')
+                            ->label('صورة الغلاف')
+                            ->image()
+                            ->required()
+                            ->disk('public')
+                            ->directory('blogs/headers')
+                            ->imageEditor()
+                            ->maxSize(2048),
+
+                        Forms\Components\FileUpload::make('image')
+                            ->label('الصورة الرئيسية')
+                            ->image()
+                            ->required()
+                            ->disk('public')
+                            ->directory('blogs')
+                            ->imageEditor()
+                            ->maxSize(2048),
                     ])
-                    ->required(),
+                    ->columns(2),
 
-                Forms\Components\DateTimePicker::make('publish_date')
-                    ->label('تاريخ النشر'),
+                Forms\Components\Section::make('المحتوى والإعدادات')
+                    ->schema([
+                        Forms\Components\RichEditor::make('content')
+                            ->label('المحتوى')
+                            ->required()
+                            ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('views')
-                    ->label('عدد المشاهدات')
-                    ->numeric()
-                    ->default(0)
-                    ->required(),
+                        Forms\Components\Select::make('blog_category_id')
+                            ->label('التصنيف')
+                            ->relationship('category', 'name')
+                            ->searchable()
+                            ->required()
+                            ->preload()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('اسم التصنيف')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Textarea::make('description')
+                                    ->label('الوصف')
+                                    ->required()
+                                    ->maxLength(500),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('نشط')
+                                    ->default(true)
+                                    ->required(),
+                            ]),
 
-                Forms\Components\FileUpload::make('image')
-                    ->label('الصورة')
-                    ->image()
-                    ->directory('blogs'),
+                        Forms\Components\Select::make('status')
+                            ->label('الحالة')
+                            ->options([
+                                'published' => 'منشور',
+                                'draft' => 'مسودة',
+                                'archived' => 'مؤرشف',
+                            ])
+                            ->required()
+                            ->default('draft'),
 
-                Forms\Components\TextInput::make('footer')
-                    ->label('تذييل')
-                    ->maxLength(255)
-                    ->default(null),
+                        Forms\Components\DateTimePicker::make('publish_date')
+                            ->label('تاريخ النشر')
+                            ->required(),
+
+                        Forms\Components\TextInput::make('views')
+                            ->label('عدد المشاهدات')
+                            ->numeric()
+                            ->default(0)
+                            ->required()
+                            ->minValue(0),
+
+                        Forms\Components\TextInput::make('footer')
+                            ->label('تذييل')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -119,24 +137,38 @@ class BlogResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('الرقم')
+                    ->sortable(),
+
+                Tables\Columns\ImageColumn::make('header_image')
+                    ->label('الغلاف')
+                    ->circular()
+                    ->size(60),
+
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('اسم المستخدم')
+                    ->label('المستخدم')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('title')
                     ->label('العنوان')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->limit(50)
+                    ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('announcement')
                     ->label('الإعلان')
-                    ->limit(30),
+                    ->limit(30)
+                    ->toggleable(),
 
-                // ✅ Fixed - using correct relationship name
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('التصنيف')
                     ->searchable()
                     ->sortable()
+                    ->badge()
+                    ->color('info')
                     ->placeholder('لا يوجد تصنيف'),
 
                 Tables\Columns\TextColumn::make('status')
@@ -146,33 +178,29 @@ class BlogResource extends Resource
                         'success' => 'published',
                         'warning' => 'draft',
                         'secondary' => 'archived',
-                    ]),
+                    ])
+                    ->formatStateUsing(fn($state) => match($state) {
+                        'published' => 'منشور',
+                        'draft' => 'مسودة',
+                        'archived' => 'مؤرشف',
+                        default => $state,
+                    }),
 
                 Tables\Columns\TextColumn::make('publish_date')
                     ->label('تاريخ النشر')
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('views')
-                    ->label('عدد المشاهدات')
+                    ->label('المشاهدات')
                     ->numeric()
-                    ->sortable(),
-
-                Tables\Columns\ImageColumn::make('header_image')
-                    ->label('صورة الغلاف'),
-
-                Tables\Columns\ImageColumn::make('image')
-                    ->label('الصورة'),
+                    ->sortable()
+                    ->badge()
+                    ->color('success'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('تاريخ التحديث')
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -192,18 +220,29 @@ class BlogResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\ViewAction::make()
+                    ->label('عرض'),
+
+                Tables\Actions\EditAction::make()
+                    ->label('تعديل')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('تم التحديث بنجاح')
+                    ),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('حذف')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('تم الحذف بنجاح')
+                    ),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-                ]),
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label('حذف المحدد'),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

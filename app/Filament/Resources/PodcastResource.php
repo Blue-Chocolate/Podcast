@@ -1,4 +1,5 @@
-<?php
+<?php 
+
 
 namespace App\Filament\Resources;
 
@@ -9,29 +10,23 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class PodcastResource extends Resource
 {
     protected static ?string $model = Podcast::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    public static function getModelLabel(): string
-    {
-        return 'بودكاست';
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return 'البودكاستات';
-    }
+    protected static ?string $navigationIcon = 'heroicon-o-microphone';
+    protected static ?string $navigationGroup = 'إدارة البودكاست';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'البودكاستات';
+    protected static ?string $modelLabel = 'بودكاست';
+    protected static ?string $pluralModelLabel = 'البودكاستات';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            // 🔹 RSS Feed URL Display (auto-generated)
             Forms\Components\Placeholder::make('generated_rss_url')
                 ->label('🎙️ رابط RSS المُولَّد (للتقديم إلى Apple Podcasts)')
                 ->content(function ($record) {
@@ -54,7 +49,6 @@ class PodcastResource extends Resource
                 })
                 ->columnSpanFull(),
 
-            // 🔹 Basic Info
             Forms\Components\Section::make('معلومات البودكاست الأساسية')
                 ->schema([
                     Forms\Components\TextInput::make('slug')
@@ -76,6 +70,7 @@ class PodcastResource extends Resource
 
                     Forms\Components\Textarea::make('description')
                         ->label('الوصف')
+                        ->required()
                         ->rows(4)
                         ->columnSpanFull(),
 
@@ -89,11 +84,11 @@ class PodcastResource extends Resource
                     Forms\Components\TextInput::make('website_url')
                         ->label('رابط الموقع')
                         ->url()
+                        ->required()
                         ->maxLength(500),
                 ])
                 ->columns(2),
 
-            // 🔹 Media Section
             Forms\Components\Section::make('الوسائط')
                 ->schema([
                     Forms\Components\FileUpload::make('cover_image')
@@ -102,8 +97,9 @@ class PodcastResource extends Resource
                         ->disk('public')
                         ->directory('covers')
                         ->visibility('public')
+                        ->required()
                         ->maxSize(10240)
-                        ->nullable()
+                        ->imageEditor()
                         ->getUploadedFileNameForStorageUsing(
                             fn($file): string =>
                                 now()->timestamp . '_' . Str::slug(
@@ -112,7 +108,6 @@ class PodcastResource extends Resource
                         ),
                 ]),
 
-            // 🔹 Optional external RSS section
             Forms\Components\Section::make('RSS خارجي (اختياري)')
                 ->schema([
                     Forms\Components\TextInput::make('rss_url')
@@ -128,13 +123,19 @@ class PodcastResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
+            Tables\Columns\TextColumn::make('id')
+                ->label('الرقم')
+                ->sortable(),
+
             Tables\Columns\ImageColumn::make('cover_image')
                 ->label('الغلاف')
-                ->circular(),
+                ->circular()
+                ->size(60),
 
             Tables\Columns\TextColumn::make('title')
                 ->label('العنوان')
                 ->searchable()
+                ->sortable()
                 ->weight('bold'),
 
             Tables\Columns\TextColumn::make('slug')
@@ -152,7 +153,7 @@ class PodcastResource extends Resource
 
             Tables\Columns\TextColumn::make('rss_feed')
                 ->label('رابط RSS')
-                ->formatStateUsing(fn($record) => route('rss.podcast', $record->slug))
+                ->formatStateUsing(fn($record) => route('podcast.rss', $record->slug))
                 ->copyable()
                 ->limit(40)
                 ->tooltip(fn($record) => route('podcast.rss', $record->slug)),
@@ -163,10 +164,11 @@ class PodcastResource extends Resource
 
             Tables\Columns\TextColumn::make('created_at')
                 ->label('تاريخ الإنشاء')
-                ->dateTime()
+                ->dateTime('Y-m-d H:i')
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
         ])
+        ->filters([])
         ->actions([
             Tables\Actions\Action::make('view_rss')
                 ->label('عرض RSS')
@@ -175,18 +177,26 @@ class PodcastResource extends Resource
                 ->openUrlInNewTab()
                 ->color('info'),
 
-            Tables\Actions\EditAction::make()->label('تعديل'),
+            Tables\Actions\EditAction::make()
+                ->label('تعديل')
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->title('تم التحديث بنجاح')
+                ),
+
+            Tables\Actions\DeleteAction::make()
+                ->label('حذف')
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->title('تم الحذف بنجاح')
+                ),
         ])
         ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-            ]),
+            Tables\Actions\DeleteBulkAction::make()
+                ->label('حذف المحدد'),
         ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

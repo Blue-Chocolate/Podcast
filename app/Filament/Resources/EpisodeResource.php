@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Filament\Resources;
 
@@ -10,153 +10,166 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
-use Illuminate\Support\Facades\Storage;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
 
 class EpisodeResource extends Resource
 {
     protected static ?string $model = Episode::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-play-circle';
     protected static ?string $navigationGroup = 'إدارة البودكاست';
-
-    public static function getModelLabel(): string
-    {
-        return 'حلقة';
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return 'الحلقات';
-    }
+    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationLabel = 'الحلقات';
+    protected static ?string $modelLabel = 'حلقة';
+    protected static ?string $pluralModelLabel = 'الحلقات';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            // Podcast - reactive so season list updates when podcast changes
-            Forms\Components\Select::make('podcast_id')
-                ->label('البودكاست')
-                ->required()
-                ->relationship('podcast', 'title')
-                ->searchable()
-                ->preload()
-                ->reactive()
-                // clear season when podcast changed
-                ->afterStateUpdated(function ($state, callable $set) {
-                    $set('season_id', null);
-                }),
+            Forms\Components\Section::make('معلومات الحلقة الأساسية')
+                ->schema([
+                    Forms\Components\Select::make('podcast_id')
+                        ->label('البودكاست')
+                        ->required()
+                        ->relationship('podcast', 'title')
+                        ->searchable()
+                        ->preload()
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $set('season_id', null);
+                        }),
 
-            // Season - options depend on selected podcast (if any), safe for create & edit
-            Forms\Components\Select::make('season_id')
-                ->label('الموسم')
-                ->options(function (callable $get) {
-                    $podcastId = $get('podcast_id');
+                    Forms\Components\Select::make('season_id')
+                        ->label('الموسم')
+                        ->options(function (callable $get) {
+                            $podcastId = $get('podcast_id');
+                            $query = Season::query();
+                            if ($podcastId) {
+                                $query->where('podcast_id', $podcastId);
+                            }
+                            return $query->orderBy('number')->pluck('title', 'id')->toArray();
+                        })
+                        ->searchable()
+                        ->preload()
+                        ->nullable()
+                        ->helperText('اختر الموسم الذي تنتمي إليه هذه الحلقة (اختياري)'),
 
-                    $query = Season::query();
+                    Forms\Components\TextInput::make('episode_number')
+                        ->label('رقم الحلقة')
+                        ->numeric()
+                        ->required()
+                        ->minValue(1),
 
-                    // If podcast selected, filter seasons by podcast (preferred UX)
-                    if ($podcastId) {
-                        $query->where('podcast_id', $podcastId);
-                    }
+                    Forms\Components\TextInput::make('title')
+                        ->label('العنوان')
+                        ->required()
+                        ->maxLength(255),
 
-                    // Order by number for nicer UX, then pluck to array
-                    return $query->orderBy('number')->pluck('title', 'id')->toArray();
-                })
-                ->searchable()
-                ->preload()
-                ->nullable()
-                ->helperText('اختر الموسم الذي تنتمي إليه هذه الحلقة (اختياري).'),
-
-            Forms\Components\TextInput::make('episode_number')
-                ->label('رقم الحلقة')
-                ->numeric()
-                ->nullable(),
-
-            Forms\Components\TextInput::make('title')
-                ->label('العنوان')
-                ->required()
-                ->maxLength(255),
-
-            Forms\Components\TextInput::make('slug')
-                ->label('المعرف (slug)')
-                ->required()
-                ->maxLength(200)
-                ->unique(ignoreRecord: true)
-                ->lazy()
-                ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
-
-            Forms\Components\Textarea::make('description')
-                ->label('الوصف')
-                ->columnSpanFull(),
-
-            Forms\Components\TextInput::make('short_description')
-                ->label('وصف مختصر')
-                ->maxLength(500)
-                ->nullable(),
-
-            Forms\Components\TextInput::make('duration_seconds')
-                ->label('مدة الحلقة (بالثواني)')
-                ->numeric()
-                ->default(0),
-
-            Forms\Components\Toggle::make('explicit')
-                ->label('محتوى صريح'),
-
-            Forms\Components\Select::make('status')
-                ->label('الحالة')
-                ->options([
-                    'draft' => 'Draft',
-                    'published' => 'Published',
-                    'archived' => 'Archived',
+                    Forms\Components\TextInput::make('slug')
+                        ->label('المعرف (slug)')
+                        ->required()
+                        ->maxLength(200)
+                        ->unique(ignoreRecord: true)
+                        ->lazy()
+                        ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                 ])
-                ->required(),
+                ->columns(2),
 
-            Forms\Components\DateTimePicker::make('published_at')
-                ->label('تاريخ النشر'),
+            Forms\Components\Section::make('الوصف والتفاصيل')
+                ->schema([
+                    Forms\Components\Textarea::make('description')
+                        ->label('الوصف')
+                        ->required()
+                        ->rows(4)
+                        ->columnSpanFull(),
 
-            Forms\Components\TextInput::make('views_count')
-                ->label('عدد المشاهدات')
-                ->numeric()
-                ->default(0),
+                    Forms\Components\TextInput::make('short_description')
+                        ->label('وصف مختصر')
+                        ->required()
+                        ->maxLength(500)
+                        ->columnSpanFull(),
 
-            // Cover image
-            Forms\Components\FileUpload::make('cover_image')
-                ->label('صورة الغلاف')
-                ->image()
-                ->disk('public')
-                ->directory('covers')
-                ->visibility('public')
-                ->maxSize(10240)
-                ->nullable()
-                ->getUploadedFileNameForStorageUsing(
-                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                ),
+                    Forms\Components\TextInput::make('duration_seconds')
+                        ->label('مدة الحلقة (بالثواني)')
+                        ->numeric()
+                        ->required()
+                        ->minValue(0)
+                        ->default(0),
 
-            // Video upload
-            Forms\Components\FileUpload::make('video_url')
-                ->label('رفع الفيديو')
-                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                ->disk('public')
-                ->directory('videos')
-                ->visibility('public')
-                ->maxSize(512000)
-                ->nullable()
-                ->getUploadedFileNameForStorageUsing(
-                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                ),
+                    Forms\Components\Toggle::make('explicit')
+                        ->label('محتوى صريح')
+                        ->default(false)
+                        ->required(),
+                ])
+                ->columns(2),
 
-            // Audio upload
-            Forms\Components\FileUpload::make('audio_url')
-                ->label('رفع الصوت')
-                ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
-                ->disk('public')
-                ->directory('audios')
-                ->visibility('public')
-                ->maxSize(51200)
-                ->nullable()
-                ->getUploadedFileNameForStorageUsing(
-                    fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                ),
+            Forms\Components\Section::make('حالة النشر')
+                ->schema([
+                    Forms\Components\Select::make('status')
+                        ->label('الحالة')
+                        ->options([
+                            'draft' => 'مسودة',
+                            'published' => 'منشور',
+                            'archived' => 'مؤرشف',
+                        ])
+                        ->required()
+                        ->default('draft'),
+
+                    Forms\Components\DateTimePicker::make('published_at')
+                        ->label('تاريخ النشر')
+                        ->required(),
+
+                    Forms\Components\TextInput::make('views_count')
+                        ->label('عدد المشاهدات')
+                        ->numeric()
+                        ->required()
+                        ->minValue(0)
+                        ->default(0),
+                ])
+                ->columns(3),
+
+            Forms\Components\Section::make('ملفات الوسائط')
+                ->schema([
+                    Forms\Components\FileUpload::make('cover_image')
+                        ->label('صورة الغلاف')
+                        ->image()
+                        ->disk('public')
+                        ->directory('covers')
+                        ->visibility('public')
+                        ->required()
+                        ->maxSize(10240)
+                        ->imageEditor()
+                        ->getUploadedFileNameForStorageUsing(
+                            fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                        ),
+
+                    Forms\Components\FileUpload::make('video_url')
+                        ->label('رفع الفيديو')
+                        ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
+                        ->disk('public')
+                        ->directory('videos')
+                        ->visibility('public')
+                        ->required()
+                        ->maxSize(512000)
+                        ->helperText('الحد الأقصى: 500 ميجابايت')
+                        ->getUploadedFileNameForStorageUsing(
+                            fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                        ),
+
+                    Forms\Components\FileUpload::make('audio_url')
+                        ->label('رفع الصوت')
+                        ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/m4a', 'audio/wav'])
+                        ->disk('public')
+                        ->directory('audios')
+                        ->visibility('public')
+                        ->required()
+                        ->maxSize(51200)
+                        ->helperText('الحد الأقصى: 50 ميجابايت')
+                        ->getUploadedFileNameForStorageUsing(
+                            fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
+                        ),
+                ])
+                ->columns(1),
         ]);
     }
 
@@ -164,9 +177,42 @@ class EpisodeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->label('العنوان')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('podcast.title')->label('البودكاست')->sortable(),
-                Tables\Columns\TextColumn::make('season.title')->label('الموسم')->sortable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->label('الرقم')
+                    ->sortable(),
+
+                Tables\Columns\ImageColumn::make('cover_image')
+                    ->label('الغلاف')
+                    ->circular()
+                    ->size(60),
+
+                Tables\Columns\TextColumn::make('title')
+                    ->label('العنوان')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(50)
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('podcast.title')
+                    ->label('البودكاست')
+                    ->sortable()
+                    ->searchable()
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\TextColumn::make('season.title')
+                    ->label('الموسم')
+                    ->sortable()
+                    ->badge()
+                    ->color('warning')
+                    ->placeholder('لا يوجد موسم'),
+
+                Tables\Columns\TextColumn::make('episode_number')
+                    ->label('رقم الحلقة')
+                    ->sortable()
+                    ->badge()
+                    ->color('gray'),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
@@ -174,27 +220,69 @@ class EpisodeResource extends Resource
                         'published' => 'success',
                         'draft' => 'warning',
                         'archived' => 'danger',
+                    })
+                    ->formatStateUsing(fn($state) => match($state) {
+                        'draft' => 'مسودة',
+                        'published' => 'منشور',
+                        'archived' => 'مؤرشف',
+                        default => $state,
                     }),
+
                 Tables\Columns\TextColumn::make('views_count')
-                    ->label('عدد المشاهدات')
+                    ->label('المشاهدات')
                     ->sortable()
                     ->badge()
-                    ->color('info'),
-                Tables\Columns\TextColumn::make('published_at')->label('تاريخ النشر')->dateTime(),
+                    ->color('success'),
+
+                Tables\Columns\TextColumn::make('published_at')
+                    ->label('تاريخ النشر')
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('podcast_id')
+                    ->label('البودكاست')
+                    ->relationship('podcast', 'title')
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\SelectFilter::make('season_id')
+                    ->label('الموسم')
+                    ->relationship('season', 'title')
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label('الحالة')
                     ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
-                        'archived' => 'Archived',
+                        'draft' => 'مسودة',
+                        'published' => 'منشور',
+                        'archived' => 'مؤرشف',
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()->label('عرض'),
-                Tables\Actions\EditAction::make()->label('تعديل'),
-                Tables\Actions\DeleteAction::make()->label('حذف'),
+                Tables\Actions\ViewAction::make()
+                    ->label('عرض'),
+
+                Tables\Actions\EditAction::make()
+                    ->label('تعديل')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('تم التحديث بنجاح')
+                    ),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('حذف')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('تم الحذف بنجاح')
+                    ),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label('حذف المحدد'),
             ]);
     }
 
