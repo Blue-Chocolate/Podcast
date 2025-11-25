@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Filament\Resources;
 
@@ -20,8 +20,8 @@ class EpisodeResource extends Resource
     protected static ?string $navigationGroup = 'إدارة البودكاست';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'الحلقات';
-    protected static ?string $modelLabel = 'حلقة';
     protected static ?string $pluralModelLabel = 'الحلقات';
+    protected static ?string $modelLabel = 'حلقة';
 
     public static function form(Form $form): Form
     {
@@ -143,18 +143,35 @@ class EpisodeResource extends Resource
                             fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
                         ),
 
-                    Forms\Components\FileUpload::make('video_url')
-                        ->label('رفع الفيديو')
-                        ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                        ->disk('public')
-                        ->directory('videos')
-                        ->visibility('public')
+                    Forms\Components\TextInput::make('video_url')
+                        ->label('رابط الفيديو (YouTube/Vimeo)')
+                        ->url()
                         ->required()
-                        ->maxSize(512000)
-                        ->helperText('الحد الأقصى: 500 ميجابايت')
-                        ->getUploadedFileNameForStorageUsing(
-                            fn($file): string => now()->timestamp . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension()
-                        ),
+                        ->placeholder('https://www.youtube.com/watch?v=...')
+                        ->helperText('أدخل رابط الفيديو من YouTube أو Vimeo أو أي منصة أخرى')
+                        ->columnSpanFull()
+                        ->rules([
+                            'required',
+                            'url',
+                            function () {
+                                return function (string $attribute, $value, $fail) {
+                                    // Optional: Validate if it's a valid video URL
+                                    $validDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'instagram.com'];
+                                    $isValid = false;
+                                    
+                                    foreach ($validDomains as $domain) {
+                                        if (str_contains($value, $domain)) {
+                                            $isValid = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (!$isValid) {
+                                        $fail('يجب أن يكون الرابط من منصة فيديو معروفة (YouTube, Vimeo, إلخ)');
+                                    }
+                                };
+                            },
+                        ]),
 
                     Forms\Components\FileUpload::make('audio_url')
                         ->label('رفع الصوت')
@@ -212,6 +229,13 @@ class EpisodeResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('gray'),
+
+                Tables\Columns\IconColumn::make('video_url')
+                    ->label('فيديو')
+                    ->icon('heroicon-o-play-circle')
+                    ->url(fn($record) => $record->video_url)
+                    ->openUrlInNewTab()
+                    ->color('primary'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('الحالة')

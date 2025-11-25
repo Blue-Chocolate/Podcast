@@ -1,6 +1,5 @@
 <?php 
 
-
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\VideoResource\Pages;
@@ -55,14 +54,34 @@ class VideoResource extends Resource
                         ->maxSize(2048)
                         ->imageEditor(),
 
-                    Forms\Components\FileUpload::make('video_path')
-                        ->label('ملف الفيديو')
-                        ->disk('public')
-                        ->directory('videos')
-                        ->acceptedFileTypes(['video/mp4', 'video/mov', 'video/avi', 'video/webm'])
+                    Forms\Components\TextInput::make('video_path')
+                        ->label('رابط الفيديو (YouTube/Vimeo)')
+                        ->url()
                         ->required()
-                        ->maxSize(512000)
-                        ->helperText('الحد الأقصى للحجم: 500 ميجابايت'),
+                        ->placeholder('https://www.youtube.com/watch?v=...')
+                        ->helperText('أدخل رابط الفيديو من YouTube أو Vimeo أو أي منصة أخرى')
+                        ->rules([
+                            'required',
+                            'url',
+                            function () {
+                                return function (string $attribute, $value, $fail) {
+                                    // Optional: Validate if it's a valid video URL
+                                    $validDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com'];
+                                    $isValid = false;
+                                    
+                                    foreach ($validDomains as $domain) {
+                                        if (str_contains($value, $domain)) {
+                                            $isValid = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (!$isValid) {
+                                        $fail('يجب أن يكون الرابط من YouTube أو Vimeo أو Dailymotion');
+                                    }
+                                };
+                            },
+                        ]),
 
                     Forms\Components\TextInput::make('views_count')
                         ->label('عدد المشاهدات')
@@ -101,6 +120,12 @@ class VideoResource extends Resource
                     ->searchable()
                     ->badge()
                     ->color('info'),
+                
+                Tables\Columns\IconColumn::make('video_path')
+                    ->label('رابط')
+                    ->icon('heroicon-o-link')
+                    ->url(fn($record) => $record->video_path)
+                    ->openUrlInNewTab(),
                 
                 Tables\Columns\TextColumn::make('views_count')
                     ->label('المشاهدات')
