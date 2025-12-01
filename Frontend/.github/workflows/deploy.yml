@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches: ['main', 'master']
+
+concurrency:
+  group: deploy-haqqeq
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Create .env
+        run: |
+          cat > .env << 'EOF'
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          EOF
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Copy dist to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 65002
+          source: 'dist/*'
+          target: '/home/u795350111/domains/haqqeq.com/public_html_tmp'
+          strip_components: 1
+          debug: true
+          timeout: 60s
+          command_timeout: 20m
+
+      - name: Activate release (atomic swap)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 65002
+          script: |
+            set -euo pipefail
+            BUILD_DIR="/home/u795350111/domains/haqqeq.com"
+
+            # Create directories if they don't exist
+            mkdir -p $BUILD_DIR/public_html_tmp
+            mkdir -p $BUILD_DIR/public_html/client
+
+            # Move build files directly to client folder
+            rsync -a --delete $BUILD_DIR/public_html_tmp/ $BUILD_DIR/public_html/client/
+            rm -rf $BUILD_DIR/public_html_tmp
+
+            # Ensure correct permissions
+            chmod -R 755 $BUILD_DIR/public_html/client
+          debug: true
+          timeout: 60s
+          command_timeout: 20m
